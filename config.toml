@@ -1,0 +1,20 @@
+[source]
+endpoint = "tcp://pubsub.besteffort.ndovloket.nl:7658"
+topics = [
+  "/RIG/KV6posinfo", "/RIG/KV17cvlinfo",
+  "/GVB/KV6posinfo", "/GVB/KV17cvlinfo",
+  "/IVU/KV6posinfo", "/IVU/KV17cvlinfo",
+  "/QBUZZ/KV6posinfo", "/QBUZZ/KV17cvlinfo",
+]
+
+[archive]
+directory = "/data/archive"
+retention_days = 30
+flush_seconds = 5
+disk_warning_gb = 10
+
+[monitoring]
+# Europe/Amsterdam. An end at or before the start means the window runs past midnight.
+service_hours = ["06:00", "00:00"]
+topic_silence_minutes = 15
+restart_silence_minutes = 10
