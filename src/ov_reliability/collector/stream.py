@@ -1,6 +1,5 @@
 """Turns the NDOV Loket ZeroMQ subscription into a stream of events."""
 
-import logging
 from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass
 from datetime import datetime
@@ -8,8 +7,6 @@ from typing import Literal
 
 import zmq
 from zmq.utils.monitor import recv_monitor_message
-
-log = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
