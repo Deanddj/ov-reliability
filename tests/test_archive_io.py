@@ -1,5 +1,7 @@
+import base64
 import gzip
 import logging
+import os
 import shutil
 import tempfile
 from datetime import UTC, datetime, timedelta
@@ -81,6 +83,23 @@ def test_flush_continues_after_clock_steps_back(
     with caplog.at_level(logging.WARNING):
         assert list(read_archive(path)) == [msg(first), msg(second), msg(third)]
     writer.close()
+
+
+def test_file_larger_than_one_read_chunk_reads_back(tmp_path: Path) -> None:
+    start = T - timedelta(minutes=30)
+    messages = [
+        msg(start + timedelta(seconds=i), base64.b64encode(os.urandom(3000)).decode())
+        for i in range(200)
+    ]
+    writer = ArchiveWriter(tmp_path, flush_seconds=5)
+    for message in messages:
+        writer.write(message)
+    path = writer.current_path
+    assert path is not None
+    writer.close()
+
+    assert path.stat().st_size > 64 * 1024
+    assert list(read_archive(path)) == messages
 
 
 def test_restart_in_same_hour_never_touches_the_old_file(tmp_path: Path) -> None:
