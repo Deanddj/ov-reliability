@@ -115,8 +115,11 @@ class ArchiveWriter:
             return
         if hour_of(now) != self._hour:
             self._close_file()
-        elif self._last_flush is not None and now - self._last_flush >= self._flush_interval:
-            self.flush(now)
+        elif self._last_flush is not None:
+            since = now - self._last_flush
+            # A clock that stepped back would otherwise postpone the next flush by the step size.
+            if since >= self._flush_interval or since < timedelta(0):
+                self.flush(now)
 
     def flush(self, now: datetime) -> None:
         if self._gzip is not None and self._dirty:
