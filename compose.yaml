@@ -1,0 +1,20 @@
+name: ov-reliability
+
+services:
+  collector:
+    build: .
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      OV_CONFIG: /app/config.toml
+    volumes:
+      - archive:/data/archive
+      - ./config.toml:/app/config.toml:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  archive:
