@@ -5,6 +5,10 @@ topics = [
   "/GVB/KV6posinfo", "/GVB/KV17cvlinfo",
   "/IVU/KV6posinfo", "/IVU/KV17cvlinfo",
   "/QBUZZ/KV6posinfo", "/QBUZZ/KV17cvlinfo",
+  "/CXX/KV6posinfo", "/CXX/KV17cvlinfo",
+  "/KEOLIS/KV6posinfo", "/KEOLIS/KV17cvlinfo",
+  "/EBS/KV6posinfo", "/EBS/KV17cvlinfo",
+  "/ARR/KV6posinfo", "/ARR/KV17cvlinfo",
 ]
 
 [archive]
