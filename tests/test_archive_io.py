@@ -63,6 +63,26 @@ def test_flush_happens_after_flush_seconds(tmp_path: Path) -> None:
     writer.close()
 
 
+def test_flush_continues_after_clock_steps_back(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    first = datetime(2026, 10, 7, 14, 40, 0, tzinfo=UTC)
+    second = datetime(2026, 10, 7, 14, 10, 0, tzinfo=UTC)
+    third = datetime(2026, 10, 7, 14, 10, 7, tzinfo=UTC)
+    writer = ArchiveWriter(tmp_path, flush_seconds=5)
+    writer.write(msg(first))
+    writer.maintain(first + timedelta(seconds=6))
+    writer.write(msg(second))
+    writer.maintain(second + timedelta(seconds=1))
+    writer.write(msg(third))
+    writer.maintain(third)
+    path = writer.current_path
+    assert path is not None
+    with caplog.at_level(logging.WARNING):
+        assert list(read_archive(path)) == [msg(first), msg(second), msg(third)]
+    writer.close()
+
+
 def test_restart_in_same_hour_never_touches_the_old_file(tmp_path: Path) -> None:
     first = ArchiveWriter(tmp_path, flush_seconds=5)
     first.write(msg(T, "first"))
