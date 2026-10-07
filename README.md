@@ -56,7 +56,7 @@ Lines with `"topic":"_recorder"` are markers (`started`, `stopped`, `connected`,
 
 To look at the latest file:
 
-    docker compose exec -T collector sh -c 'zcat /data/archive/$(ls /data/archive | tail -1)' | head
+    docker compose exec -T collector sh -c 'zcat /data/archive/$(ls -t /data/archive | head -1)' | head
 
 The file being written is cut off at the last flush, so zcat may report an unexpected end of
 file; the lines before it are fine.
