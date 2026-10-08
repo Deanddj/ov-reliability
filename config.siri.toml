@@ -1,0 +1,18 @@
+# The GVB metro (lines 50-54) is only published in SIRI, not in KV6. A second collector records it.
+
+[source]
+endpoint = "tcp://pubsub.besteffort.ndovloket.nl:7666"
+topics = ["/GVB/EstimatedTimetableDelivery", "/GVB/VehicleMonitoringDelivery"]
+
+[archive]
+directory = "/data/archive"
+retention_days = 30
+flush_seconds = 5
+disk_warning_gb = 10
+
+[monitoring]
+# Europe/Amsterdam. One window for every day, so it starts after Sunday's first trip (07:01).
+service_hours = ["07:30", "00:30"]
+topic_silence_minutes = 15
+restart_silence_minutes = 10
+watched_topics = ["/GVB/EstimatedTimetableDelivery"]

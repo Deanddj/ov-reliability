@@ -16,6 +16,21 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  collector-siri:
+    build: .
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      OV_CONFIG: /app/config.siri.toml
+    volumes:
+      - archive-siri:/data/archive
+      - ./config.siri.toml:/app/config.siri.toml:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   timetables:
     build: .
     command: ["/app/.venv/bin/python", "-m", "ov_reliability.timetables"]
@@ -34,4 +49,5 @@ services:
 
 volumes:
   archive:
+  archive-siri:
   timetables:
