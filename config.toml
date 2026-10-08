@@ -22,3 +22,11 @@ disk_warning_gb = 10
 service_hours = ["06:00", "00:00"]
 topic_silence_minutes = 15
 restart_silence_minutes = 10
+
+[timetables]
+base_url = "https://data.ndovloket.nl/netex/"
+operators = ["arr", "cxx", "ebs", "gvb", "htm", "keolis", "qbuzz", "ret"]
+directory = "/data/timetables"
+check_minutes = 60
+timeout_seconds = 120
+disk_warning_gb = 10
