@@ -8,7 +8,7 @@ from ov_reliability.config import Config
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
-def config_data(archive_dir: Path) -> dict[str, Any]:
+def config_data(archive_dir: Path, timetables_dir: Path | None = None) -> dict[str, Any]:
     return {
         "source": {
             "endpoint": "tcp://127.0.0.1:1",
@@ -24,6 +24,14 @@ def config_data(archive_dir: Path) -> dict[str, Any]:
             "service_hours": ["06:00", "00:00"],
             "topic_silence_minutes": 15,
             "restart_silence_minutes": 10,
+        },
+        "timetables": {
+            "base_url": "https://example.org/netex/",
+            "operators": ["gvb", "htm"],
+            "directory": str(timetables_dir or archive_dir.parent / "timetables"),
+            "check_minutes": 60,
+            "timeout_seconds": 30,
+            "disk_warning_gb": 0,
         },
     }
 
