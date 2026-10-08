@@ -73,7 +73,7 @@ class Recorder:
         started_at = self._clock()
         monitoring = self._config.monitoring
         self._silence = SilenceTracker(
-            self._config.kv6_topics,
+            monitoring.watched_topics,
             ServiceHours(*monitoring.service_hours),
             timedelta(minutes=monitoring.topic_silence_minutes),
             timedelta(minutes=monitoring.restart_silence_minutes),

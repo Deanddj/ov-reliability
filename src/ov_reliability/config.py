@@ -4,8 +4,9 @@ import re
 import tomllib
 from datetime import datetime, time
 from pathlib import Path
+from typing import Self
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class _Section(BaseModel):
@@ -37,6 +38,7 @@ class MonitoringConfig(_Section):
     service_hours: tuple[time, time]
     topic_silence_minutes: int = Field(ge=1)
     restart_silence_minutes: int = Field(ge=1)
+    watched_topics: tuple[str, ...] = Field(min_length=1)
 
     @field_validator("service_hours", mode="before")
     @classmethod
@@ -86,9 +88,15 @@ class Config(_Section):
     archive: ArchiveConfig
     monitoring: MonitoringConfig
 
-    @property
-    def kv6_topics(self) -> tuple[str, ...]:
-        return tuple(topic for topic in self.source.topics if topic.endswith("/KV6posinfo"))
+    @model_validator(mode="after")
+    def _check_watched_topics(self) -> Self:
+        watched = self.monitoring.watched_topics
+        if len(set(watched)) != len(watched):
+            raise ValueError("watched_topics must be unique")
+        for topic in watched:
+            if topic not in self.source.topics:
+                raise ValueError(f"watched topic {topic!r} is not in source.topics")
+        return self
 
 
 def load_config(path: Path) -> Config:

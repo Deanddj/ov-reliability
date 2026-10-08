@@ -23,6 +23,11 @@ disk_warning_gb = 10
 service_hours = ["06:00", "00:00"]
 topic_silence_minutes = 15
 restart_silence_minutes = 10
+# Topics that should never be quiet in service hours. KV17 and KV15 can be quiet for long periods.
+watched_topics = [
+  "/RIG/KV6posinfo", "/GVB/KV6posinfo", "/IVU/KV6posinfo", "/QBUZZ/KV6posinfo",
+  "/CXX/KV6posinfo", "/KEOLIS/KV6posinfo", "/EBS/KV6posinfo", "/ARR/KV6posinfo",
+]
 
 [timetables]
 base_url = "https://data.ndovloket.nl/netex/"

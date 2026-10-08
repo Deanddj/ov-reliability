@@ -119,6 +119,17 @@ def test_one_silent_topic_gets_start_and_end_markers(config: Config) -> None:
     assert [m.details["silent_topic"] for m in markers(records, "silence_end")] == [GVB]
 
 
+def test_unwatched_topic_is_never_silent(config: Config) -> None:
+    assert "/RIG/KV17cvlinfo" in config.source.topics
+    assert "/RIG/KV17cvlinfo" not in config.monitoring.watched_topics
+    events: list[Event] = []
+    for m in range(120):
+        at = T0 + timedelta(minutes=m)
+        events += [received(at, RIG), received(at, GVB)]
+    _, records = run(config, events)
+    assert markers(records, "silence_start") == []
+
+
 def test_all_topics_silent_exits_with_1(config: Config) -> None:
     code, records = run(config, [Tick(T0 + timedelta(minutes=11))], stop_at_end=False)
     assert code == EXIT_SILENCE
