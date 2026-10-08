@@ -1,8 +1,9 @@
 # ov-reliability
 
 How reliable is a Dutch tram, bus or metro line right now? This project records the real-time
-KV6/KV17 stream that Dutch operators publish through [NDOV Loket](https://govi.nu) and will turn
-it into punctuality figures served by an API.
+BISON stream that Dutch operators publish through [NDOV Loket](https://govi.nu): KV6 (where each
+vehicle is and how late), KV17 (cancelled and changed trips) and KV15 (messages to travellers,
+such as a closed stop and why). It will turn them into punctuality figures served by an API.
 
 The first part is the **recorder**. Punctuality history can't be fetched afterwards: it only
 exists from the moment someone starts recording it. The recorder runs around the clock and
