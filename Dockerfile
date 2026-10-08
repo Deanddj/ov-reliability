@@ -13,12 +13,12 @@ RUN uv sync --locked --no-dev --no-install-project
 COPY src ./src
 RUN uv sync --locked --no-dev
 
-# The archive directory must exist and belong to the app user before a fresh named volume is
-# mounted on it, otherwise the volume is created root-owned and the recorder cannot write.
+# The data directories must exist and belong to the app user before a fresh named volume is
+# mounted on them, otherwise the volume is created root-owned and the services cannot write.
 RUN groupadd --system --gid 10001 app \
     && useradd --system --uid 10001 --gid app --no-create-home app \
-    && mkdir -p /data/archive \
-    && chown app:app /data/archive
+    && mkdir -p /data/archive /data/timetables \
+    && chown app:app /data/archive /data/timetables
 USER app
 
 CMD ["/app/.venv/bin/python", "-m", "ov_reliability.collector"]
