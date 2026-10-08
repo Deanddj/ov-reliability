@@ -40,6 +40,7 @@ disk_warning_gb = 10
 service_hours = ["06:00", "00:00"]
 topic_silence_minutes = 15
 restart_silence_minutes = 10
+watched_topics = ["/RIG/KV6posinfo"]
 
 [timetables]
 base_url = "https://example.org/netex/"
@@ -60,8 +61,31 @@ disk_warning_gb = 0
     assert timetables.directory == Path("/data/timetables")
 
 
-def test_kv6_topics_only_lists_kv6(config: Config) -> None:
-    assert config.kv6_topics == ("/RIG/KV6posinfo", "/GVB/KV6posinfo")
+def test_repo_config_watches_the_kv6_topics() -> None:
+    config = load_config(REPO_ROOT / "config.toml")
+    kv6 = {topic for topic in config.source.topics if topic.endswith("/KV6posinfo")}
+    assert len(kv6) == 8
+    assert set(config.monitoring.watched_topics) == kv6
+
+
+@pytest.mark.parametrize(
+    ("watched", "message"),
+    [
+        ([], "at least 1"),
+        (["/RIG/KV6posinfo", "/RIG/KV6posinfo"], "unique"),
+        (["/HTM/KV6posinfo"], "'/HTM/KV6posinfo' is not in source.topics"),
+    ],
+)
+def test_invalid_watched_topics_are_rejected(watched: list[str], message: str) -> None:
+    with pytest.raises(ValidationError, match=message):
+        Config.model_validate(_with(("monitoring", "watched_topics"), watched))
+
+
+def test_missing_watched_topics_is_an_error() -> None:
+    data = copy.deepcopy(config_data(Path("/tmp/archive")))
+    del data["monitoring"]["watched_topics"]
+    with pytest.raises(ValidationError, match="watched_topics"):
+        Config.model_validate(data)
 
 
 def _with(path: tuple[str, str], value: Any) -> dict[str, Any]:

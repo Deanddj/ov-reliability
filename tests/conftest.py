@@ -24,6 +24,7 @@ def config_data(archive_dir: Path, timetables_dir: Path | None = None) -> dict[s
             "service_hours": ["06:00", "00:00"],
             "topic_silence_minutes": 15,
             "restart_silence_minutes": 10,
+            "watched_topics": ["/RIG/KV6posinfo", "/GVB/KV6posinfo"],
         },
         "timetables": {
             "base_url": "https://example.org/netex/",

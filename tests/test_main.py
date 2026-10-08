@@ -26,6 +26,7 @@ disk_warning_gb = 0
 service_hours = ["06:00", "00:00"]
 topic_silence_minutes = 15
 restart_silence_minutes = 10
+watched_topics = ["/RIG/KV6posinfo"]
 """
 
 
