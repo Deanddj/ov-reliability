@@ -1,14 +1,15 @@
 [source]
 endpoint = "tcp://pubsub.besteffort.ndovloket.nl:7658"
+# Subscriptions match by prefix. Keolis's KV15 envelope is listed as "KV15message" (no "s").
 topics = [
-  "/RIG/KV6posinfo", "/RIG/KV17cvlinfo",
-  "/GVB/KV6posinfo", "/GVB/KV17cvlinfo",
-  "/IVU/KV6posinfo", "/IVU/KV17cvlinfo",
-  "/QBUZZ/KV6posinfo", "/QBUZZ/KV17cvlinfo",
-  "/CXX/KV6posinfo", "/CXX/KV17cvlinfo",
-  "/KEOLIS/KV6posinfo", "/KEOLIS/KV17cvlinfo",
-  "/EBS/KV6posinfo", "/EBS/KV17cvlinfo",
-  "/ARR/KV6posinfo", "/ARR/KV17cvlinfo",
+  "/RIG/KV6posinfo", "/RIG/KV17cvlinfo", "/RIG/KV15messages",
+  "/GVB/KV6posinfo", "/GVB/KV17cvlinfo", "/GVB/KV15messages",
+  "/IVU/KV6posinfo", "/IVU/KV17cvlinfo", "/IVU/KV15messages",
+  "/QBUZZ/KV6posinfo", "/QBUZZ/KV17cvlinfo", "/QBUZZ/KV15messages",
+  "/CXX/KV6posinfo", "/CXX/KV17cvlinfo", "/CXX/KV15messages",
+  "/KEOLIS/KV6posinfo", "/KEOLIS/KV17cvlinfo", "/KEOLIS/KV15message",
+  "/EBS/KV6posinfo", "/EBS/KV17cvlinfo", "/EBS/KV15messages",
+  "/ARR/KV6posinfo", "/ARR/KV17cvlinfo", "/ARR/KV15messages",
 ]
 
 [archive]
