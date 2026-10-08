@@ -8,6 +8,10 @@ The first part is the **recorder**. Punctuality history can't be fetched afterwa
 exists from the moment someone starts recording it. The recorder runs around the clock and
 stores every message for GVB, HTM, RET and U-OV.
 
+Next to it, the **timetable archive** keeps every published timetable. The timetable is what
+tells a trip that never ran apart from one that was never planned, and the source only offers
+the current version.
+
 ## Running it
 
 Requires Docker with the Compose plugin.
@@ -21,7 +25,8 @@ Updating:
     git pull
     docker compose up -d --build
 
-Settings live in `config.toml`: topics, archive retention, service hours and silence limits.
+Settings live in `config.toml`: topics, archive retention, service hours, silence limits and
+the timetable operators and check interval.
 
 ## Checking that it works
 
@@ -38,6 +43,41 @@ A WARNING means something needs attention: a topic that has gone quiet during se
 a subscribed topic that sent nothing in the first hour, a payload that couldn't be decoded, or
 low disk space. In the last case the hourly line itself is logged as a WARNING and ends with
 `; low free disk, warning below 10 GB`.
+
+## Timetables
+
+The `timetables` service checks the NeTEx directories on
+[data.ndovloket.nl](https://data.ndovloket.nl/netex/) every hour, for the operators listed in
+`config.toml`, and downloads every file it hasn't stored yet. A replaced timetable disappears
+from the source, and a new one only covers the days from its publication on, so the timetable
+for a past day can only be found here.
+
+Files are kept unchanged in the `timetables` volume as `<operator>/<original name>`. A file is
+only stored after it has been decompressed in full and starts as XML. Nothing is overwritten:
+if a file is republished under the same name with different content, the new version is
+stored beside it as `<name>.<first 8 characters of its sha256>.xml.gz`.
+
+`index.jsonl` has one line per stored file:
+
+    {"stored_at":"2026-10-08T12:12:20.512Z","operator":"ret","name":"NeTEx_RET_ALL_20261005_20261005_version415_v930.xml.gz","file":"ret/NeTEx_RET_ALL_20261005_20261005_version415_v930.xml.gz","bytes":3191007,"sha256":"...","listed_modified":"05-Oct-2026 14:11"}
+
+`listed_modified` is the modification time as the listing shows it (local time, no zone).
+
+After each check the service logs one line:
+
+    docker compose logs --since 2h timetables
+
+    2026-10-08 12:12:35,790 INFO ov_reliability.timetables.archiver check done: 8 operators, 38 listed, 38 new (70.9 MB), 0 republished, 0 errors, 794.9 GB free
+
+A listing that can't be fetched or a download that fails is a WARNING and is tried again at
+the next check. A listing page that no longer looks like the one this parser knows is an ERROR,
+and so is a check in which every operator failed.
+
+At startup the service compares the index with the files. A file that was stored but never
+indexed (a crash between the two steps) is added to the index with `listed_modified` set to
+`null`, and a cut-off last index line is removed; both are logged as a WARNING. An index line
+whose file is missing or has a different size stops the service, because something outside it
+changed the archive.
 
 ## The archive
 
@@ -82,10 +122,12 @@ difference:
   quietly.
 - **Configuration.** Topics, retention and service hours are settings, so covering another
   operator is an edit to `config.toml`, not to the code.
+- **Reversibility.** Raw messages and timetables are stored before anything reads them, and
+  stored timetables are never overwritten, so a better parser can always be run over old data.
 
 ## Data
 
-Real-time data from NDOV Loket, published under CC0.
+Real-time data and timetables from NDOV Loket, published under CC0.
 
 ## License
 
