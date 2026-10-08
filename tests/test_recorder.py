@@ -8,7 +8,7 @@ import pytest
 from conftest import FIXTURES, config_data
 
 from ov_reliability.collector.archive import ArchiveWriter, list_archive, read_archive
-from ov_reliability.collector.recorder import EXIT_OK, EXIT_SILENCE, Recorder
+from ov_reliability.collector.recorder import EXIT_OK, EXIT_SILENCE, Recorder, to_record
 from ov_reliability.collector.records import BadPayload, Marker, Message, Record
 from ov_reliability.collector.stream import Connection, Event, Received, Tick
 from ov_reliability.config import Config
@@ -78,6 +78,13 @@ def test_started_and_stopped_markers(config: Config) -> None:
 def test_message_is_stored_decompressed(config: Config) -> None:
     _, records = run(config, [received(T0)])
     assert [r for r in records if isinstance(r, Message)] == [Message(T0, RIG, XML)]
+
+
+def test_siri_payload_is_stored_unchanged() -> None:
+    xml = (FIXTURES / "siri_gvb_et.xml").read_text(encoding="utf-8")
+    topic = "/GVB/EstimatedTimetableDelivery"
+    event = Received(T0, topic.encode(), (gzip.compress(xml.encode()),))
+    assert to_record(event) == Message(T0, topic, xml)
 
 
 def test_bad_payload_is_kept_and_recording_continues(

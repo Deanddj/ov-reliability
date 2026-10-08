@@ -22,6 +22,13 @@ def test_repository_config_is_valid() -> None:
     assert "htm" in timetables.operators
 
 
+def test_siri_config_is_valid() -> None:
+    config = load_config(REPO_ROOT / "config.siri.toml")
+    assert config.source.endpoint.endswith(":7666")
+    assert config.monitoring.watched_topics == ("/GVB/EstimatedTimetableDelivery",)
+    assert config.monitoring.service_hours == (time(7, 30), time(0, 30))
+
+
 def test_load_config_reads_toml(tmp_path: Path) -> None:
     path = tmp_path / "config.toml"
     path.write_text(
