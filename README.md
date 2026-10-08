@@ -9,6 +9,9 @@ The first part is the **recorder**. Punctuality history can't be fetched afterwa
 exists from the moment someone starts recording it. The recorder runs around the clock and
 stores every message for GVB, HTM, RET and U-OV.
 
+GVB publishes its metro (lines 50-54) only in SIRI, a second stream on NDOV Loket, so a second
+recorder, `collector-siri`, runs the same code against that stream.
+
 Next to it, the **timetable archive** keeps every published timetable. The timetable is what
 tells a trip that never ran apart from one that was never planned, and the source only offers
 the current version.
@@ -26,12 +29,14 @@ Updating:
     git pull
     docker compose up -d --build
 
-Settings live in `config.toml`: topics, archive retention, service hours, silence limits and
-the timetable operators and check interval.
+Settings live in `config.toml`: topics, archive retention, service hours, silence limits, the
+topics that should never go quiet and the timetable operators and check interval. The metro
+recorder has its own `config.siri.toml` with the same sections, except `[timetables]`.
 
 ## Checking that it works
 
     docker compose logs --since 2h collector
+    docker compose logs --since 2h collector-siri
 
 Every hour the recorder logs one line about the hour that just ended, such as
 
@@ -40,10 +45,10 @@ Every hour the recorder logs one line about the hour that just ended, such as
 The count includes the markers described below, listed under `_recorder`. The size is the
 uncompressed size of the records.
 
-A WARNING means something needs attention: a topic that has gone quiet during service hours,
-a subscribed topic that sent nothing in the first hour, a payload that couldn't be decoded, or
-low disk space. In the last case the hourly line itself is logged as a WARNING and ends with
-`; low free disk, warning below 10 GB`.
+A WARNING means something needs attention: a watched topic that has gone quiet during service
+hours, a subscribed topic that sent nothing in the first hour, a payload that couldn't be
+decoded, or low disk space. In the last case the hourly line itself is logged as a WARNING
+and ends with `; low free disk, warning below 10 GB`.
 
 ## Timetables
 
@@ -101,6 +106,8 @@ To look at the latest file:
 
 The file being written is cut off at the last flush, so zcat may report an unexpected end of
 file; the lines before it are fine.
+
+The metro recorder writes the same files and markers to its own `archive-siri` volume.
 
 ## Development
 
