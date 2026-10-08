@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime
 
 import pytest
 from hypothesis import given
@@ -12,20 +12,9 @@ from ov_reliability.collector.records import (
     Message,
     decode,
     encode,
-    format_timestamp,
 )
 
 AT = datetime(2026, 10, 7, 14, 30, 5, 123000, tzinfo=UTC)
-
-
-def test_timestamp_is_utc_with_milliseconds() -> None:
-    cest = timezone(timedelta(hours=2))
-    assert format_timestamp(AT.astimezone(cest)) == "2026-10-07T14:30:05.123Z"
-
-
-def test_naive_timestamp_is_rejected() -> None:
-    with pytest.raises(ValueError):
-        format_timestamp(datetime(2026, 10, 7, 14, 30))
 
 
 @pytest.mark.parametrize(

@@ -2,8 +2,10 @@
 
 import json
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Any
+
+from ov_reliability.timestamps import format_timestamp, parse_timestamp
 
 RECORDER_TOPIC = "_recorder"
 _MARKER_FIELDS = frozenset({"received_at", "topic", "event"})
@@ -41,19 +43,6 @@ class Marker:
 
 
 type Record = Message | BadPayload | Marker
-
-
-def format_timestamp(at: datetime) -> str:
-    if at.tzinfo is None:
-        raise ValueError("timestamp must be timezone-aware")
-    return at.astimezone(UTC).isoformat(timespec="milliseconds").replace("+00:00", "Z")
-
-
-def parse_timestamp(text: str) -> datetime:
-    at = datetime.fromisoformat(text)
-    if at.tzinfo is None:
-        raise ValueError(f"timestamp without timezone: {text!r}")
-    return at.astimezone(UTC)
 
 
 def encode(record: Record) -> str:
