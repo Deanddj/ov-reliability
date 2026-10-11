@@ -47,7 +47,48 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ov
+      POSTGRES_DB: ov
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "ov", "-d", "ov"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  loader:
+    build: .
+    command: ["/app/.venv/bin/python", "-m", "ov_reliability.loader"]
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      OV_CONFIG: /app/config.toml
+      OV_DATABASE_URL: postgresql://ov:${POSTGRES_PASSWORD}@postgres/ov
+    volumes:
+      - archive:/data/archive:ro
+      - ./config.toml:/app/config.toml:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   archive:
   archive-siri:
   timetables:
+  pgdata:
