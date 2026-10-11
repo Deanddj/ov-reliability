@@ -16,13 +16,20 @@ Next to it, the **timetable archive** keeps every published timetable. The timet
 tells a trip that never ran apart from one that was never planned, and the source only offers
 the current version.
 
+The **loader** reads the archive into PostgreSQL: the stop events and cancellations of the lines
+the API will serve. It follows the file being written, so the database is about ten seconds
+behind the stream.
+
 ## Running it
 
 Requires Docker with the Compose plugin.
 
     git clone https://github.com/Deanddj/ov-reliability.git
     cd ov-reliability
+    echo "POSTGRES_PASSWORD=$(openssl rand -hex 24)" > .env
     docker compose up -d --build
+
+`.env` holds the database password and is not committed.
 
 Updating:
 
@@ -31,7 +38,8 @@ Updating:
 
 Settings live in `config.toml`: topics, archive retention, service hours, silence limits, the
 topics that should never go quiet and the timetable operators and check interval. The metro
-recorder has its own `config.siri.toml` with the same sections, except `[timetables]`.
+recorder has its own `config.siri.toml` with the same sections, except `[timetables]` and
+`[loader]`.
 
 ## Checking that it works
 
@@ -109,6 +117,48 @@ file; the lines before it are fine.
 
 The metro recorder writes the same files and markers to its own `archive-siri` volume.
 
+## Database
+
+The `loader` service reads the archive files in order and writes to the `postgres` service. It
+remembers how far it got (file and record) in the same transaction as the rows, so a restart
+never loads a message twice or skips one. On its first start it begins with the oldest file in
+the archive.
+
+What it stores, for the data owners in `[loader] data_owners`:
+
+- `stop_events`: KV6 `ARRIVAL` and `DEPARTURE`, with the delay exactly as the operator reported
+  it. These are what a departure's delay is read from.
+- `trips_seen`: one row per trip that sent an `ARRIVAL`, `ONSTOP` or `DEPARTURE`. `ONSTOP` repeats
+  every minute while a vehicle stands still, so it only counts here, not as rows of its own.
+- `journey_mutations`: KV17 `CANCEL`, `RECOVER`, `NOTMONITORED` and `SHORTEN` (a skipped stop).
+- `recorder_markers`, `load_progress` and `bad_messages`.
+
+Position updates between stops (`ONROUTE`) and KV15 messages stay in the raw archive only.
+
+The day tables have one partition per operating day. Days older than `window_days` (90) are
+dropped once an hour.
+
+A message that can't be read (broken XML, a missing field, a time that can't be right) is
+stored in `bad_messages` with the reason, and loading goes on; the hourly line is then a
+WARNING. A damaged archive file that is already complete stops the loader with an ERROR.
+
+Every hour the loader logs one line per archive:
+
+    docker compose logs --since 2h loader
+
+    2026-10-09 09:00:06,012 INFO ov_reliability.loader Last hour from collector: 32765 records, 78492 stop events, 533 mutations, 0 bad messages; data until 2026-10-09T08:59:59.950000+00:00 (6 s behind)
+
+### Replay
+
+When the parser changes, the database is rebuilt from the raw archive:
+
+    docker compose stop loader
+    docker compose run --rm loader /app/.venv/bin/python -m ov_reliability.loader replay
+    docker compose start loader
+
+Replay empties the days from the day after the oldest archive file on, and the loader then
+reads every file again. Older days stay as they are, because their raw files are gone.
+
 ## Development
 
 Requires [uv](https://docs.astral.sh/uv/).
@@ -117,6 +167,13 @@ Requires [uv](https://docs.astral.sh/uv/).
     uv run pytest
     uv run ruff check . && uv run ruff format --check .
     uv run mypy
+
+The database tests need a PostgreSQL server and are skipped without one:
+
+    docker run --rm -d -p 127.0.0.1:5433:5432 -e POSTGRES_PASSWORD=test postgres:18
+    OV_TEST_DATABASE_URL=postgresql://postgres:test@127.0.0.1:5433/postgres uv run pytest
+
+Each test works in a schema of its own, which is dropped afterwards. CI always runs them.
 
 ## Design
 
