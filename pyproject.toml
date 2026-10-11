@@ -8,6 +8,7 @@ license-files = ["LICENSE"]
 authors = [{ name = "Dean Jaddoe", email = "deanjaddoe@gmail.com" }]
 requires-python = ">=3.13"
 dependencies = [
+    "psycopg[binary]>=3.3.6",
     "pydantic>=2.13.5",
     "pyzmq>=27.2.0",
 ]
