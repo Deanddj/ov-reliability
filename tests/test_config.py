@@ -14,7 +14,7 @@ REPO_ROOT = Path(__file__).parents[1]
 
 def test_repository_config_is_valid() -> None:
     config = load_config(REPO_ROOT / "config.toml")
-    assert config.archive.retention_days == 30
+    assert config.archive.retention_days == 60
     assert config.monitoring.service_hours == (time(6, 0), time(0, 0))
     assert "/RIG/KV6posinfo" in config.source.topics
     timetables = load_timetables_config(REPO_ROOT / "config.toml")
