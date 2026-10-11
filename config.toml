@@ -14,7 +14,7 @@ topics = [
 
 [archive]
 directory = "/data/archive"
-retention_days = 30
+retention_days = 60
 flush_seconds = 5
 disk_warning_gb = 10
 
