@@ -79,6 +79,48 @@ class TimetablesConfig(_Section):
         return operators
 
 
+DATA_OWNER = re.compile(r"^[A-Z0-9]+$")
+RECORDER = re.compile(r"^[a-z0-9-]+$")
+
+
+class ArchiveSource(_Section):
+    recorder: str
+    directory: Path
+
+    @field_validator("recorder")
+    @classmethod
+    def _check_recorder(cls, recorder: str) -> str:
+        if not RECORDER.match(recorder):
+            raise ValueError(f"recorder {recorder!r} must match {RECORDER.pattern}")
+        return recorder
+
+
+class LoaderConfig(_Section):
+    data_owners: tuple[str, ...] = Field(min_length=1)
+    window_days: int = Field(ge=1)
+    poll_seconds: float = Field(ge=1)
+    archives: tuple[ArchiveSource, ...] = Field(min_length=1)
+
+    @field_validator("data_owners")
+    @classmethod
+    def _check_data_owners(cls, owners: tuple[str, ...]) -> tuple[str, ...]:
+        # KV6 writes the owner in capitals; a lower-case entry would silently match nothing.
+        for owner in owners:
+            if not DATA_OWNER.match(owner):
+                raise ValueError(f"data owner {owner!r} must match {DATA_OWNER.pattern}")
+        if len(set(owners)) != len(owners):
+            raise ValueError("data_owners must be unique")
+        return owners
+
+    @field_validator("archives")
+    @classmethod
+    def _check_archives(cls, archives: tuple[ArchiveSource, ...]) -> tuple[ArchiveSource, ...]:
+        recorders = [archive.recorder for archive in archives]
+        if len(set(recorders)) != len(recorders):
+            raise ValueError("archive recorders must be unique")
+        return archives
+
+
 class Config(_Section):
     # Other services' sections are ignored here, so a mistake in one of them can't stop the
     # collector. Each service validates only the sections it uses.
@@ -108,6 +150,13 @@ def load_timetables_config(path: Path) -> TimetablesConfig:
     if "timetables" not in data:
         raise ValueError(f"{path} has no [timetables] section")
     return TimetablesConfig.model_validate(data["timetables"])
+
+
+def load_loader_config(path: Path) -> LoaderConfig:
+    data = _read_toml(path)
+    if "loader" not in data:
+        raise ValueError(f"{path} has no [loader] section")
+    return LoaderConfig.model_validate(data["loader"])
 
 
 def _read_toml(path: Path) -> dict[str, object]:

@@ -34,6 +34,12 @@ def config_data(archive_dir: Path, timetables_dir: Path | None = None) -> dict[s
             "timeout_seconds": 30,
             "disk_warning_gb": 0,
         },
+        "loader": {
+            "data_owners": ["HTM", "RET"],
+            "window_days": 90,
+            "poll_seconds": 5,
+            "archives": [{"recorder": "collector", "directory": str(archive_dir)}],
+        },
     }
 
 
