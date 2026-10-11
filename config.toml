@@ -36,3 +36,13 @@ directory = "/data/timetables"
 check_minutes = 60
 timeout_seconds = 120
 disk_warning_gb = 10
+
+[loader]
+# Data owners whose KV6 and KV17 events are stored. Other owners stay in the raw archive only.
+data_owners = ["HTM", "GVB", "RET", "CXX"]
+window_days = 90
+poll_seconds = 5
+
+[[loader.archives]]
+recorder = "collector"
+directory = "/data/archive"

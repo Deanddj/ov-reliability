@@ -7,7 +7,14 @@ import pytest
 from conftest import config_data
 from pydantic import ValidationError
 
-from ov_reliability.config import Config, TimetablesConfig, load_config, load_timetables_config
+from ov_reliability.config import (
+    Config,
+    LoaderConfig,
+    TimetablesConfig,
+    load_config,
+    load_loader_config,
+    load_timetables_config,
+)
 
 REPO_ROOT = Path(__file__).parents[1]
 
@@ -20,6 +27,9 @@ def test_repository_config_is_valid() -> None:
     timetables = load_timetables_config(REPO_ROOT / "config.toml")
     assert timetables.check_minutes == 60
     assert "htm" in timetables.operators
+    loader = load_loader_config(REPO_ROOT / "config.toml")
+    assert loader.data_owners == ("HTM", "GVB", "RET", "CXX")
+    assert [archive.recorder for archive in loader.archives] == ["collector"]
 
 
 def test_siri_config_is_valid() -> None:
@@ -161,3 +171,37 @@ def test_missing_timetables_section_is_an_error(tmp_path: Path) -> None:
     path.write_text('[source]\nendpoint = "x"\n', encoding="utf-8")
     with pytest.raises(ValueError, match="timetables"):
         load_timetables_config(path)
+
+
+@pytest.mark.parametrize(
+    ("key", "value"),
+    [
+        ("data_owners", []),
+        ("data_owners", ["htm"]),
+        ("data_owners", ["HTM", "HTM"]),
+        ("window_days", 0),
+        ("poll_seconds", 0),
+        ("archives", []),
+        ("archives", [{"recorder": "Collector", "directory": "/data/archive"}]),
+        (
+            "archives",
+            [
+                {"recorder": "collector", "directory": "/data/a"},
+                {"recorder": "collector", "directory": "/data/b"},
+            ],
+        ),
+        ("unexpected", 1),
+    ],
+)
+def test_invalid_loader_values_are_rejected(key: str, value: Any) -> None:
+    data = copy.deepcopy(config_data(Path("/tmp/archive"))["loader"])
+    data[key] = value
+    with pytest.raises(ValidationError):
+        LoaderConfig.model_validate(data)
+
+
+def test_missing_loader_section_is_an_error(tmp_path: Path) -> None:
+    path = tmp_path / "config.toml"
+    path.write_text('[source]\nendpoint = "x"\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="loader"):
+        load_loader_config(path)
