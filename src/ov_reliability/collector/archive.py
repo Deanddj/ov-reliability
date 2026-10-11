@@ -10,11 +10,13 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from io import BufferedWriter
 from pathlib import Path
+from typing import Self
 
 from ov_reliability.collector.records import InvalidRecordError, Record, decode, encode
 
 log = logging.getLogger(__name__)
 
+_CHUNK_BYTES = 64 * 1024
 _NAME = re.compile(r"^(\d{4}-\d{2}-\d{2}T\d{2})Z\.(\d+)\.jsonl\.gz$")
 
 
@@ -69,15 +71,23 @@ def apply_retention(directory: Path, now: datetime, retention_days: int) -> list
     return deleted
 
 
-def _parse_name(path: Path) -> ArchiveFile | None:
-    match = _NAME.match(path.name)
-    if match is None or not path.is_file():
+def parse_file_name(name: str) -> tuple[datetime, int] | None:
+    """The (hour, seq) an archive file name stands for, or None if it isn't one."""
+    match = _NAME.match(name)
+    if match is None:
         return None
     try:
         hour = datetime.strptime(match[1], "%Y-%m-%dT%H").replace(tzinfo=UTC)
     except ValueError:
         return None
-    return ArchiveFile(hour, int(match[2]), path)
+    return hour, int(match[2])
+
+
+def _parse_name(path: Path) -> ArchiveFile | None:
+    parsed = parse_file_name(path.name)
+    if parsed is None or not path.is_file():
+        return None
+    return ArchiveFile(*parsed, path)
 
 
 class CorruptArchiveError(Exception):
@@ -162,26 +172,58 @@ class ArchiveWriter:
         self._hour = None
 
 
+class ArchiveTail:
+    """Reads an archive file a chunk at a time, including bytes appended after it was opened."""
+
+    def __init__(self, path: Path) -> None:
+        self._path = path
+        self._file = path.open("rb")
+        self._decompressor = zlib.decompressobj(wbits=zlib.MAX_WBITS | 16)
+        self._pending = b""
+
+    @property
+    def finished(self) -> bool:
+        """The gzip stream has ended, so the file will not grow any more."""
+        return self._decompressor.eof
+
+    @property
+    def partial_line(self) -> bool:
+        return bool(self._pending)
+
+    def read(self) -> list[Record] | None:
+        """The records completed by the next chunk, or None if there are no new bytes yet."""
+        chunk = self._file.read(_CHUNK_BYTES)
+        if not chunk:
+            return None
+        if self._decompressor.eof:
+            raise CorruptArchiveError(f"{self._path.name}: data after the end of the gzip stream")
+        try:
+            self._pending += self._decompressor.decompress(chunk)
+        except zlib.error as exc:
+            raise CorruptArchiveError(f"{self._path.name}: {exc}") from None
+        if self._decompressor.unused_data:
+            raise CorruptArchiveError(f"{self._path.name}: data after the end of the gzip stream")
+        *lines, self._pending = self._pending.split(b"\n")
+        return [_decode_line(self._path, line) for line in lines]
+
+    def close(self) -> None:
+        self._file.close()
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, *exc_info: object) -> None:
+        self.close()
+
+
 def read_archive(path: Path) -> Iterator[Record]:
-    decompressor = zlib.decompressobj(wbits=zlib.MAX_WBITS | 16)
-    pending = b""
-    with path.open("rb") as file:
-        while chunk := file.read(64 * 1024):
-            try:
-                pending += decompressor.decompress(chunk)
-            except zlib.error as exc:
-                raise CorruptArchiveError(f"{path.name}: {exc}") from None
-            *lines, pending = pending.split(b"\n")
-            for line in lines:
-                yield _decode_line(path, line)
-            if decompressor.eof:
-                if decompressor.unused_data or file.read(1):
-                    raise CorruptArchiveError(f"{path.name}: data after the end of the gzip stream")
-                break
-    if not decompressor.eof:
-        log.warning("%s is cut off; read up to the last complete line", path.name)
-    elif pending:
-        log.warning("%s ends without a newline; ignored the last partial line", path.name)
+    with ArchiveTail(path) as tail:
+        while (records := tail.read()) is not None:
+            yield from records
+        if not tail.finished:
+            log.warning("%s is cut off; read up to the last complete line", path.name)
+        elif tail.partial_line:
+            log.warning("%s ends without a newline; ignored the last partial line", path.name)
 
 
 def _decode_line(path: Path, line: bytes) -> Record:
