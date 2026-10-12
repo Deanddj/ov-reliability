@@ -57,8 +57,8 @@ def test_serves_the_app(
     ("old", "new", "message"),
     [
         ("missing_after_minutes = 15", "missing_after_minutes = 0", "missing_after_minutes"),
-        ('lines = ["htm/tram/3"]', 'lines = ["htm/tram"]', "operator/mode/code"),
-        ('lines = ["htm/tram/3"]', 'lines = ["gvb/tram/2"]', "gvb/tram/2 is in no"),
+        ('lines = ["htm/tram/3"', 'lines = ["htm/tram"', "operator/mode/code"),
+        ('lines = ["htm/tram/3"', 'lines = ["gvb/tram/2"', "gvb/tram/2 is in no"),
         ('timetables"\ncheck_minutes', 'nonexistent"\ncheck_minutes', "does not exist"),
     ],
 )

@@ -52,7 +52,7 @@ default_range_minutes = 120
 max_range_days = 7
 missing_after_minutes = 15
 # Lines the API serves, as "operator/mode/code". "*" matches any mode or code.
-lines = ["htm/tram/3"]
+lines = ["htm/tram/3", "htm/tram/4", "htm/tram/34"]
 # Lines with no real-time data anywhere: their trips are "unknown", never "missing".
 no_realtime = []
 # Planning numbers in the timetable that are not a service riders see.

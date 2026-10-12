@@ -37,7 +37,7 @@ def test_repository_config_is_valid() -> None:
     assert loader.data_owners == ("HTM", "GVB", "RET", "CXX")
     assert [archive.recorder for archive in loader.archives] == ["collector"]
     api = load_api_config(REPO_ROOT / "config.toml")
-    assert api.lines == (LinePattern("htm", "tram", "3"),)
+    assert LinePattern("htm", "tram", "3") in api.lines
     assert api.ignore_planning_numbers == (("htm", "54"),)
 
 
@@ -363,7 +363,7 @@ def _repo_config_with(tmp_path: Path, *changes: tuple[str, str]) -> Path:
 def test_api_line_operator_must_have_timetables(tmp_path: Path) -> None:
     path = _repo_config_with(
         tmp_path,
-        ('lines = ["htm/tram/3"]', 'lines = ["htm/tram/3", "abc/bus/1"]'),
+        ('lines = ["htm/tram/3"', 'lines = ["abc/bus/1", "htm/tram/3"'),
         ("no_realtime = []", 'no_realtime = ["abc/*/*"]'),
     )
     with pytest.raises(ValueError, match=re.escape("abc/bus/1: operator not in [timetables]")):
