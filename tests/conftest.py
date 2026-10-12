@@ -47,6 +47,21 @@ def config_data(archive_dir: Path, timetables_dir: Path | None = None) -> dict[s
             "poll_seconds": 5,
             "archives": [{"recorder": "collector", "directory": str(archive_dir)}],
         },
+        "api": {
+            "default_range_minutes": 120,
+            "max_range_days": 7,
+            "missing_after_minutes": 15,
+            "lines": ["htm/tram/3"],
+            "no_realtime": ["gvb/ferry/*"],
+            "ignore_planning_numbers": ["htm/54"],
+            "realtime": [
+                {
+                    "lines": ["htm/*/*"],
+                    "recorder": "collector",
+                    "topics": ["/RIG/KV6posinfo", "/RIG/KV17cvlinfo"],
+                }
+            ],
+        },
     }
 
 

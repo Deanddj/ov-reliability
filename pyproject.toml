@@ -8,13 +8,16 @@ license-files = ["LICENSE"]
 authors = [{ name = "Dean Jaddoe", email = "deanjaddoe@gmail.com" }]
 requires-python = ">=3.13"
 dependencies = [
+    "fastapi>=0.143.0",
     "psycopg[binary]>=3.3.6",
     "pydantic>=2.13.5",
     "pyzmq>=27.2.0",
+    "uvicorn>=0.54.0",
 ]
 
 [dependency-groups]
 dev = [
+    "httpx2>=2.13.1",
     "hypothesis>=6.168.5",
     "mypy>=2.4.0",
     "pytest>=9.1.1",

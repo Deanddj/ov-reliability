@@ -1,16 +1,22 @@
 import copy
+import re
 from datetime import time
 from pathlib import Path
 from typing import Any
 
 import pytest
 from conftest import config_data
+from hypothesis import given
+from hypothesis import strategies as st
 from pydantic import ValidationError
 
 from ov_reliability.config import (
+    ApiConfig,
     Config,
+    LinePattern,
     LoaderConfig,
     TimetablesConfig,
+    load_api_config,
     load_config,
     load_loader_config,
     load_timetables_config,
@@ -30,6 +36,9 @@ def test_repository_config_is_valid() -> None:
     loader = load_loader_config(REPO_ROOT / "config.toml")
     assert loader.data_owners == ("HTM", "GVB", "RET", "CXX")
     assert [archive.recorder for archive in loader.archives] == ["collector"]
+    api = load_api_config(REPO_ROOT / "config.toml")
+    assert api.lines == (LinePattern("htm", "tram", "3"),)
+    assert api.ignore_planning_numbers == (("htm", "54"),)
 
 
 def test_siri_config_is_valid() -> None:
@@ -205,3 +214,178 @@ def test_missing_loader_section_is_an_error(tmp_path: Path) -> None:
     path.write_text('[source]\nendpoint = "x"\n', encoding="utf-8")
     with pytest.raises(ValueError, match="loader"):
         load_loader_config(path)
+
+
+def _api(**changes: Any) -> dict[str, Any]:
+    data: dict[str, Any] = copy.deepcopy(config_data(Path("/tmp/archive"))["api"])
+    data.update(changes)
+    return data
+
+
+def test_api_section_parses_patterns() -> None:
+    api = ApiConfig.model_validate(_api(lines=["htm/tram/3", "htm/*/*"]))
+    assert api.lines == (LinePattern("htm", "tram", "3"), LinePattern("htm", "*", "*"))
+    assert str(api.lines[1]) == "htm/*/*"
+    assert api.no_realtime == (LinePattern("gvb", "ferry", "*"),)
+    assert api.realtime[0].lines == (LinePattern("htm", "*", "*"),)
+
+
+def test_no_realtime_may_carve_out_of_a_realtime_entry() -> None:
+    # Widening to all of HTM: the realtime entry covers htm/*/*, the ferries have none.
+    ApiConfig.model_validate(_api(lines=["htm/*/*"], no_realtime=["htm/ferry/*"]))
+
+
+BAD_PATTERNS = [
+    "htm/tram",
+    "htm/tram/3/4",
+    "*/tram/3",
+    "HTM/tram/3",
+    "htm/Tram/3",
+    "htm/tram/",
+    "htm//3",
+    "htm/tram/3 ",
+    "htm/tram/3*",
+    "",
+]
+
+
+@pytest.mark.parametrize("pattern", BAD_PATTERNS)
+@pytest.mark.parametrize("key", ["lines", "no_realtime"])
+def test_bad_line_patterns_are_refused(key: str, pattern: str) -> None:
+    with pytest.raises(ValidationError, match="operator/mode/code"):
+        ApiConfig.model_validate(_api(**{key: [pattern]}))
+
+
+@pytest.mark.parametrize("pattern", BAD_PATTERNS)
+def test_bad_realtime_patterns_are_refused(pattern: str) -> None:
+    data = _api()
+    data["realtime"][0]["lines"] = [pattern]
+    with pytest.raises(ValidationError, match="operator/mode/code"):
+        ApiConfig.model_validate(data)
+
+
+@pytest.mark.parametrize("entry", ["htm", "htm/", "/54", "htm/5/4", "HTM/54", "htm/5 4", 54])
+def test_bad_ignored_planning_numbers_are_refused(entry: object) -> None:
+    with pytest.raises(ValidationError, match="operator/number"):
+        ApiConfig.model_validate(_api(ignore_planning_numbers=[entry]))
+
+
+@pytest.mark.parametrize(
+    ("key", "value"),
+    [
+        ("default_range_minutes", 0),
+        ("max_range_days", 0),
+        ("missing_after_minutes", 0),
+        ("lines", []),
+        ("unexpected", 1),
+    ],
+)
+def test_invalid_api_values_are_refused(key: str, value: Any) -> None:
+    with pytest.raises(ValidationError):
+        ApiConfig.model_validate(_api(**{key: value}))
+
+
+@pytest.mark.parametrize(
+    ("key", "value"),
+    [
+        ("lines", []),
+        ("recorder", "Collector"),
+        ("topics", []),
+        ("topics", [""]),
+        ("topics", ["/RIG/KV6posinfo", "/RIG/KV6posinfo"]),
+    ],
+)
+def test_invalid_realtime_values_are_refused(key: str, value: Any) -> None:
+    data = _api()
+    data["realtime"][0][key] = value
+    with pytest.raises(ValidationError):
+        ApiConfig.model_validate(data)
+
+
+@pytest.mark.parametrize(
+    ("changes", "message"),
+    [
+        (
+            {"lines": ["ret/tram/3"]},
+            "ret/tram/3 is in no [[api.realtime]] entry nor in no_realtime",
+        ),
+        ({"lines": ["gvb/*/*"]}, "gvb/*/* is in no [[api.realtime]] entry nor in no_realtime"),
+        ({"no_realtime": ["htm/tram/*"]}, "htm/tram/3 is in an [[api.realtime]] entry and in"),
+    ],
+)
+def test_every_line_has_exactly_one_kind_of_source(changes: dict[str, Any], message: str) -> None:
+    with pytest.raises(ValidationError, match=re.escape(message)):
+        ApiConfig.model_validate(_api(**changes))
+
+
+def test_a_line_without_realtime_data_is_served() -> None:
+    ApiConfig.model_validate(_api(lines=["htm/tram/3", "gvb/ferry/902"]))
+
+
+def test_overlapping_realtime_entries_are_refused() -> None:
+    data = _api()
+    data["realtime"].append(
+        {"lines": ["htm/tram/*"], "recorder": "collector", "topics": ["/RIG/KV6posinfo"]}
+    )
+    with pytest.raises(ValidationError, match=re.escape("htm/*/* and htm/tram/* overlap")):
+        ApiConfig.model_validate(data)
+
+
+PARTS = st.sampled_from(["tram", "bus", "*"]), st.sampled_from(["3", "4", "*"])
+PATTERNS = st.builds(LinePattern, st.sampled_from(["htm", "ret"]), *PARTS)
+# "other" stands for every mode or code no pattern names.
+LINES = [
+    LinePattern(operator, mode, code)
+    for operator in ("htm", "ret")
+    for mode in ("tram", "bus", "other")
+    for code in ("3", "4", "other")
+]
+
+
+@given(PATTERNS, PATTERNS)
+def test_covers_and_overlaps_agree_with_the_lines_matched(a: LinePattern, b: LinePattern) -> None:
+    in_a = {line for line in LINES if a.covers(line)}
+    in_b = {line for line in LINES if b.covers(line)}
+    assert a.covers(b) == (in_b <= in_a)
+    assert a.overlaps(b) == bool(in_a & in_b) == b.overlaps(a)
+
+
+def _repo_config_with(tmp_path: Path, *changes: tuple[str, str]) -> Path:
+    text = (REPO_ROOT / "config.toml").read_text(encoding="utf-8")
+    for old, new in changes:
+        assert old in text
+        text = text.replace(old, new, 1)
+    path = tmp_path / "config.toml"
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def test_api_line_operator_must_have_timetables(tmp_path: Path) -> None:
+    path = _repo_config_with(
+        tmp_path,
+        ('lines = ["htm/tram/3"]', 'lines = ["htm/tram/3", "abc/bus/1"]'),
+        ("no_realtime = []", 'no_realtime = ["abc/*/*"]'),
+    )
+    with pytest.raises(ValueError, match=re.escape("abc/bus/1: operator not in [timetables]")):
+        load_api_config(path)
+
+
+def test_api_recorder_must_be_loaded(tmp_path: Path) -> None:
+    path = _repo_config_with(tmp_path, ('recorder = "collector"\ntopics', 'recorder = "x"\ntopics'))
+    with pytest.raises(ValueError, match=re.escape("recorder 'x' is not in [[loader.archives]]")):
+        load_api_config(path)
+
+
+@pytest.mark.parametrize("section", ["api", "timetables", "loader"])
+def test_api_needs_its_sections(tmp_path: Path, section: str) -> None:
+    kept = []
+    skipping = False
+    for line in (REPO_ROOT / "config.toml").read_text(encoding="utf-8").splitlines():
+        if line.startswith("["):
+            skipping = line.strip("[]").split(".")[0] == section
+        if not skipping:
+            kept.append(line)
+    path = tmp_path / "config.toml"
+    path.write_text("\n".join(kept), encoding="utf-8")
+    with pytest.raises(ValueError, match=re.escape(f"no [{section}] section")):
+        load_api_config(path)

@@ -46,3 +46,20 @@ poll_seconds = 5
 [[loader.archives]]
 recorder = "collector"
 directory = "/data/archive"
+
+[api]
+default_range_minutes = 120
+max_range_days = 7
+missing_after_minutes = 15
+# Lines the API serves, as "operator/mode/code". "*" matches any mode or code.
+lines = ["htm/tram/3"]
+# Lines with no real-time data anywhere: their trips are "unknown", never "missing".
+no_realtime = []
+# Planning numbers in the timetable that are not a service riders see.
+ignore_planning_numbers = ["htm/54"]
+
+# Which recorder and topics carry the real-time data of which lines.
+[[api.realtime]]
+lines = ["htm/*/*", "ret/*/*"]
+recorder = "collector"
+topics = ["/RIG/KV6posinfo", "/RIG/KV17cvlinfo"]
