@@ -3,7 +3,8 @@
 How reliable is a Dutch tram, bus or metro line right now? This project records the real-time
 BISON stream that Dutch operators publish through [NDOV Loket](https://govi.nu): KV6 (where each
 vehicle is and how late), KV17 (cancelled and changed trips) and KV15 (messages to travellers,
-such as a closed stop and why). It will turn them into punctuality figures served by an API.
+such as a closed stop and why). An API turns them into what a rider wants to know: which trips
+of a line ran, how late, and which never came.
 
 The first part is the **recorder**. Punctuality history can't be fetched afterwards: it only
 exists from the moment someone starts recording it. The recorder runs around the clock and
@@ -17,8 +18,10 @@ tells a trip that never ran apart from one that was never planned, and the sourc
 the current version.
 
 The **loader** reads the archive into PostgreSQL: the stop events and cancellations of the lines
-the API will serve. It follows the file being written, so the database is about ten seconds
-behind the stream.
+the API serves. It follows the file being written, so the database is about ten seconds behind
+the stream.
+
+The **API** joins the archived timetable with what the loader stored, per request.
 
 ## Running it
 
@@ -37,9 +40,9 @@ Updating:
     docker compose up -d --build
 
 Settings live in `config.toml`: topics, archive retention, service hours, silence limits, the
-topics that should never go quiet and the timetable operators and check interval. The metro
-recorder has its own `config.siri.toml` with the same sections, except `[timetables]` and
-`[loader]`.
+topics that should never go quiet, the timetable operators and check interval, and the lines the
+API serves. The metro recorder has its own `config.siri.toml` with the same sections, except
+`[timetables]`, `[loader]` and `[api]`.
 
 ## Checking that it works
 
@@ -112,6 +115,126 @@ with its planned arrival and departure.
 For each series of an operator (the third part of the file name) the newest file valid on the
 day is used. A day no file covers, or a file that doesn't make sense (a reference to something
 that isn't there, a missing run time), exits with code 1 and says why.
+
+## The API
+
+The `api` service listens on `127.0.0.1:8000` of the host.
+
+| Endpoint | Returns |
+|---|---|
+| `GET /v1/lines` | The served lines, with their planning numbers and whether real-time data exists |
+| `GET /v1/lines/{operator}/{mode}/{code}/trips` | Every trip of the line in the range, with its status and departures |
+| `GET /v1/lines/{operator}/{mode}/{code}/summary` | Counts and delay percentiles per direction, from the same trips |
+
+A line is named as the rider sees it: `htm/tram/3`. One line can cover several planning numbers
+in the timetable; `meta.line.planning_numbers` lists them.
+
+Parameters:
+
+- `from`, `to`: ISO 8601 with a UTC offset, such as `2026-10-11T10:00:00+02:00` (send `+` as
+  `%2B`) or `2026-10-11T08:00:00Z`. Without them the range is the last two hours; at most seven
+  days.
+- `direction`: `inbound` or `outbound`.
+
+A trip is in the range when one of its planned departures is; only those departures are
+returned, but the status is decided on the whole trip.
+
+    curl -s 'http://127.0.0.1:8000/v1/lines/htm/tram/3/trips?from=2026-10-08T21:30:00%2B02:00&to=2026-10-08T21:35:00%2B02:00'
+
+    {
+      "meta": {
+        "line": {"operator": "htm", "mode": "tram", "code": "3", "planning_numbers": ["3", "53"]},
+        "from": "2026-10-08T21:30:00+02:00",
+        "to": "2026-10-08T21:35:00+02:00",
+        "generated_at": "2026-10-09T12:00:00+02:00",
+        "timetable_files": {
+          "2026-10-07": ["NeTEx_HTM_Rail_20260923_20261005_new.xml.gz"],
+          "2026-10-08": ["NeTEx_HTM_Rail_20260923_20261005_new.xml.gz"]
+        },
+        "data_until": {"collector": "2026-10-09T11:59:58+02:00"},
+        "recorder_gaps": []
+      },
+      "trips": [
+        ...
+        {
+          "operating_day": "2026-10-08",
+          "planning_number": "3",
+          "journey_number": 30199,
+          "planned": true,
+          "direction": "inbound",
+          "destination": "Den Haag  Loosduinen",
+          "planned_start": "2026-10-08T20:42:26+02:00",
+          "status": "ran",
+          "departures": [
+            {"stop_code": "1122", "stop_name": "Van Speijkstraat", "sequence": 27,
+             "planned": "2026-10-08T21:30:29+02:00", "actual": "2026-10-08T21:34:19+02:00",
+             "delay_seconds": 228, "event": "DEPARTURE", "cancelled": false},
+            ...
+          ]
+        },
+        ...
+        {
+          "operating_day": "2026-10-08",
+          "planning_number": "3",
+          "journey_number": 30203,
+          ...
+          "status": "ran",
+          "departures": [
+            {"stop_code": "8104", "stop_name": "Centrum-West (spoor 1)", "sequence": 13,
+             "planned": "2026-10-08T21:31:18+02:00", "actual": null,
+             "delay_seconds": null, "event": null, "cancelled": true},
+            ...
+          ]
+        },
+        ...
+      ]
+    }
+
+Times are Europe/Amsterdam with their offset. A delay is in whole seconds, positive is late, and
+is the delay the operator reported for that stop (the last `DEPARTURE` there; at the last stop
+the first `ARRIVAL`). It can differ from `actual - planned` by a few seconds, because the
+operator's own plan includes dwell times the published timetable doesn't. A delay is `null` when
+the stop has no such event, or when the operator reported a placeholder (exactly ±3600 or -9999).
+`cancelled` marks a stop the operator skipped (KV17 `SHORTEN`) where no tram was seen.
+
+| Status | Meaning |
+|---|---|
+| `ran` | At least one stop event (`ARRIVAL`, `ONSTOP`, `DEPARTURE`) arrived for the trip. This wins over a cancellation. |
+| `cancelled` | The latest KV17 journey message is `CANCEL`, and no stop event arrived |
+| `missing` | Nothing arrived, 15 minutes after the planned start, while the recorder was recording and the loader was up to date |
+| `unknown` | As `missing`, but the recorder had a gap in the trip's window, the loader is behind, the line has no real-time data, or the operator said `NOTMONITORED` |
+| `not_yet_due` | The planned start is less than 15 minutes ago, or in the future |
+
+The status is decided at each request: a very late tram is `missing` until it reports in, then
+`ran`. A trip seen in real time but not in the timetable is returned with `planned: false`.
+
+`meta` shows what the answer is based on: the timetable file per operating day, how far the
+database is loaded (`data_until`) and the recorder gaps in the range.
+
+`/summary` has one block per direction, and trips without a direction get their own:
+
+    {
+      "direction": "outbound",
+      "trips": {"total": 8, "ran": 8, "cancelled": 0, "missing": 0, "unknown": 0, "not_yet_due": 0, "unplanned": 0},
+      "departures": {"total": 164, "with_delay": 76, "without_delay": 88, "cancelled": 45},
+      "delay_seconds": {"p10": 130, "p50": 882, "p90": 4481}
+    }
+
+That was 21:00-22:00 on Thursday 8 October, an evening with a disruption: every tram ran, but 45
+outbound stops were skipped, and the latest tenth of the departures left 74 minutes late or
+more.
+
+The percentiles are taken over the departures with a known delay, by nearest rank: sort the
+delays and take the one at position ceil(p/100 × n). Each percentile is a delay that happened.
+They are `null` when no departure has a delay.
+
+Errors are `{"detail": ...}`: 404 for a line that isn't served or isn't in the timetable, 422
+for a bad range or direction, 503 when no timetable file covers an operating day of the range.
+
+The `[api]` section of `config.toml` decides which lines are served, which have no real-time
+data, which planning numbers are left out (HTM's `54` is published with code 4 but never runs)
+and which recorder's data covers which lines. Serving another line is a change to `lines`
+followed by `docker compose restart api`.
 
 ## The archive
 
@@ -209,6 +332,10 @@ difference:
   operator is an edit to `config.toml`, not to the code.
 - **Reversibility.** Raw messages and timetables are stored before anything reads them, and
   stored timetables are never overwritten, so a better parser can always be run over old data.
+- **Test what must always hold.** The trip statuses are checked against rules that hold for any
+  input, generated by Hypothesis: a trip is never `missing` while the recorder had a gap in its
+  window, a trip with a stop event is never `cancelled`, and the summary always equals the
+  counts over the returned trips.
 
 ## Data
 
