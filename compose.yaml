@@ -98,9 +98,10 @@ services:
     volumes:
       - timetables:/data/timetables:ro
       - ./config.toml:/app/config.toml:ro
-    # Only reachable from the VPS itself until publishing it is decided.
+    # Only reachable from the host itself until publishing it is decided; API_PORT in .env
+    # moves it if 8470 is taken.
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:${API_PORT:-8470}:8000"
     depends_on:
       postgres:
         condition: service_healthy

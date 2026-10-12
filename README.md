@@ -118,7 +118,8 @@ that isn't there, a missing run time), exits with code 1 and says why.
 
 ## The API
 
-The `api` service listens on `127.0.0.1:8000` of the host.
+The `api` service listens on `127.0.0.1:8470` of the host. If that port is taken, set another
+one in `.env`, such as `API_PORT=8471`.
 
 | Endpoint | Returns |
 |---|---|
@@ -139,7 +140,7 @@ Parameters:
 A trip is in the range when one of its planned departures is; only those departures are
 returned, but the status is decided on the whole trip.
 
-    curl -s 'http://127.0.0.1:8000/v1/lines/htm/tram/3/trips?from=2026-10-08T21:30:00%2B02:00&to=2026-10-08T21:35:00%2B02:00'
+    curl -s 'http://127.0.0.1:8470/v1/lines/htm/tram/3/trips?from=2026-10-08T21:30:00%2B02:00&to=2026-10-08T21:35:00%2B02:00'
 
     {
       "meta": {
