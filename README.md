@@ -93,6 +93,26 @@ indexed (a crash between the two steps) is added to the index with `listed_modif
 whose file is missing or has a different size stops the service, because something outside it
 changed the archive.
 
+### Planned trips
+
+To see which trips the archived timetables plan for a line on a day:
+
+    docker compose exec timetables /app/.venv/bin/python -m ov_reliability.timetables.plan htm tram 3 2026-10-08
+
+    htm tram 3, 2026-10-08, files: NeTEx_HTM_Bus_20260924_20261005_new.xml.gz, NeTEx_HTM_Rail_20260923_20261005_new.xml.gz
+    04:51  journey 30004   pn 3    outbound  Zoetermeer  Centrum      04:51 -> 05:00  4 stops
+    05:00  journey 30001   pn 3    inbound   Den Haag  Loosduinen     05:00 -> 06:06  41 stops
+    ...
+    outbound 109 trips, inbound 105 trips
+
+The arguments are the operator's archive directory, the NeTEx transport mode, the public line
+code and the operating day. Times are local. `--journey 30001` prints every stop of that trip
+with its planned arrival and departure.
+
+For each series of an operator (the third part of the file name) the newest file valid on the
+day is used. A day no file covers, or a file that doesn't make sense (a reference to something
+that isn't there, a missing run time), exits with code 1 and says why.
+
 ## The archive
 
 Messages are stored as one gzipped JSON Lines file per hour in the `archive` volume, named by
