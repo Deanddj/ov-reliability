@@ -4,7 +4,7 @@ import argparse
 import logging
 import sys
 from collections import Counter
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
@@ -87,16 +87,21 @@ def choose_files(
     return sorted(newest.values(), key=lambda header: header.series)
 
 
+def line_numbers(timetable: TimetableFile, line: LineName) -> set[str]:
+    """The planning numbers in a file that riders see as `line`."""
+    return {
+        number
+        for number, found in timetable.lines.items()
+        if found.public_code == line.public_code and found.mode == line.mode
+    }
+
+
 def planned_trips(files: Iterable[TimetableFile], line: LineName, day: date) -> list[PlannedTrip]:
     trips: list[PlannedTrip] = []
     found_in: dict[str, str] = {}
     for timetable in files:
         file_name = timetable.header.file_name
-        numbers = {
-            number
-            for number, found in timetable.lines.items()
-            if found.public_code == line.public_code and found.mode == line.mode
-        }
+        numbers = line_numbers(timetable, line)
         for number in sorted(numbers):
             if number in found_in:
                 raise TimetableError(
@@ -156,21 +161,31 @@ def to_utc(day: date, start_day_offset: int, start_clock: int) -> tuple[datetime
     return first.astimezone(UTC), corrected
 
 
-def load_plan(timetables_dir: Path, line: LineName, day: date) -> Plan:
+def load_timetables(
+    timetables_dir: Path,
+    operator: str,
+    day: date,
+    read: Callable[[Path], TimetableFile] = read_timetable,
+) -> list[TimetableFile]:
+    """The files of an operator that are in force on `day`, one per series."""
     headers: list[TimetableHeader] = []
     for entry in _read_index(timetables_dir / INDEX_NAME):
-        if entry.operator != line.operator:
+        if entry.operator != operator:
             continue
         path = timetables_dir / entry.file
         if not path.is_file():
             raise TimetableError(entry.file, f"is in {INDEX_NAME} but missing")
         headers.append(read_header(path))
-    chosen = choose_files(headers, line.operator, day)
+    chosen = choose_files(headers, operator, day)
     if not chosen:
-        raise NoTimetableError(line.operator, day)
-    files = [read_timetable(timetables_dir / line.operator / h.file_name) for h in chosen]
+        raise NoTimetableError(operator, day)
+    return [read(timetables_dir / operator / header.file_name) for header in chosen]
+
+
+def load_plan(timetables_dir: Path, line: LineName, day: date) -> Plan:
+    files = load_timetables(timetables_dir, line.operator, day)
     trips = planned_trips(files, line, day)
-    return Plan(tuple(h.file_name for h in chosen), tuple(trips))
+    return Plan(tuple(f.header.file_name for f in files), tuple(trips))
 
 
 def _read_index(path: Path) -> list[IndexEntry]:
