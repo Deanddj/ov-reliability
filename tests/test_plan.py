@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-from netexfile import NAME, SMALL, write_netex
+from netexfile import NAME, SMALL, index_line, write_netex
 
 from ov_reliability.timetables.netex import (
     LOCAL,
@@ -29,7 +29,6 @@ from ov_reliability.timetables.plan import (
     planned_trips,
     to_utc,
 )
-from ov_reliability.timetables.store import IndexEntry
 
 TRAM_3 = LineName("htm", "tram", "3")
 SUNDAY = date(2026, 10, 11)
@@ -214,19 +213,6 @@ def test_to_utc_around_clock_changes(day: date, clock: int) -> None:
 
 def test_to_utc_day_offset() -> None:
     assert to_utc(SUNDAY, 1, 10 * 60) == (utc(11, 22, 10), False)
-
-
-def index_line(file: str, operator: str = "htm") -> str:
-    entry = IndexEntry(
-        stored_at=utc(8, 12, 0),
-        operator=operator,
-        name=file.split("/")[1],
-        file=file,
-        bytes=1,
-        sha256="0" * 64,
-        listed_modified=None,
-    )
-    return entry.to_json() + "\n"
 
 
 def test_load_plan(tmp_path: Path) -> None:
