@@ -1,0 +1,860 @@
+{
+  "components": {
+    "schemas": {
+      "DepartureCountsOut": {
+        "properties": {
+          "cancelled": {
+            "title": "Cancelled",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "with_delay": {
+            "title": "With Delay",
+            "type": "integer"
+          },
+          "without_delay": {
+            "title": "Without Delay",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "with_delay",
+          "without_delay",
+          "cancelled"
+        ],
+        "title": "DepartureCountsOut",
+        "type": "object"
+      },
+      "DepartureOut": {
+        "properties": {
+          "actual": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual"
+          },
+          "cancelled": {
+            "title": "Cancelled",
+            "type": "boolean"
+          },
+          "delay_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delay Seconds"
+          },
+          "event": {
+            "anyOf": [
+              {
+                "enum": [
+                  "DEPARTURE",
+                  "ARRIVAL"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event"
+          },
+          "planned": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned"
+          },
+          "sequence": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sequence"
+          },
+          "stop_code": {
+            "title": "Stop Code",
+            "type": "string"
+          },
+          "stop_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stop Name"
+          }
+        },
+        "required": [
+          "stop_code",
+          "stop_name",
+          "sequence",
+          "planned",
+          "actual",
+          "delay_seconds",
+          "event",
+          "cancelled"
+        ],
+        "title": "DepartureOut",
+        "type": "object"
+      },
+      "Direction": {
+        "enum": [
+          "inbound",
+          "outbound"
+        ],
+        "type": "string"
+      },
+      "DirectionOut": {
+        "properties": {
+          "delay_seconds": {
+            "$ref": "#/components/schemas/PercentilesOut"
+          },
+          "departures": {
+            "$ref": "#/components/schemas/DepartureCountsOut"
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direction"
+          },
+          "trips": {
+            "$ref": "#/components/schemas/TripCountsOut"
+          }
+        },
+        "required": [
+          "direction",
+          "trips",
+          "departures",
+          "delay_seconds"
+        ],
+        "title": "DirectionOut",
+        "type": "object"
+      },
+      "GapOut": {
+        "properties": {
+          "from": {
+            "title": "From",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "recorder": {
+            "title": "Recorder",
+            "type": "string"
+          },
+          "to": {
+            "title": "To",
+            "type": "string"
+          },
+          "topic": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic"
+          }
+        },
+        "required": [
+          "recorder",
+          "topic",
+          "from",
+          "to",
+          "reason"
+        ],
+        "title": "GapOut",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "LineOut": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "operator": {
+            "title": "Operator",
+            "type": "string"
+          },
+          "planning_numbers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Planning Numbers",
+            "type": "array"
+          },
+          "realtime": {
+            "title": "Realtime",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "operator",
+          "mode",
+          "code",
+          "name",
+          "planning_numbers",
+          "realtime"
+        ],
+        "title": "LineOut",
+        "type": "object"
+      },
+      "LinesResponse": {
+        "properties": {
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/LineOut"
+            },
+            "title": "Lines",
+            "type": "array"
+          }
+        },
+        "required": [
+          "lines"
+        ],
+        "title": "LinesResponse",
+        "type": "object"
+      },
+      "Meta": {
+        "properties": {
+          "data_until": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Data Until",
+            "type": "object"
+          },
+          "from": {
+            "title": "From",
+            "type": "string"
+          },
+          "generated_at": {
+            "title": "Generated At",
+            "type": "string"
+          },
+          "line": {
+            "$ref": "#/components/schemas/MetaLine"
+          },
+          "recorder_gaps": {
+            "items": {
+              "$ref": "#/components/schemas/GapOut"
+            },
+            "title": "Recorder Gaps",
+            "type": "array"
+          },
+          "timetable_files": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Timetable Files",
+            "type": "object"
+          },
+          "to": {
+            "title": "To",
+            "type": "string"
+          }
+        },
+        "required": [
+          "line",
+          "from",
+          "to",
+          "generated_at",
+          "timetable_files",
+          "data_until",
+          "recorder_gaps"
+        ],
+        "title": "Meta",
+        "type": "object"
+      },
+      "MetaLine": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "operator": {
+            "title": "Operator",
+            "type": "string"
+          },
+          "planning_numbers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Planning Numbers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "operator",
+          "mode",
+          "code",
+          "planning_numbers"
+        ],
+        "title": "MetaLine",
+        "type": "object"
+      },
+      "PercentilesOut": {
+        "properties": {
+          "p10": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P10"
+          },
+          "p50": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P50"
+          },
+          "p90": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P90"
+          }
+        },
+        "required": [
+          "p10",
+          "p50",
+          "p90"
+        ],
+        "title": "PercentilesOut",
+        "type": "object"
+      },
+      "Status": {
+        "enum": [
+          "ran",
+          "cancelled",
+          "missing",
+          "unknown",
+          "not_yet_due"
+        ],
+        "type": "string"
+      },
+      "SummaryResponse": {
+        "properties": {
+          "directions": {
+            "items": {
+              "$ref": "#/components/schemas/DirectionOut"
+            },
+            "title": "Directions",
+            "type": "array"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "meta",
+          "directions"
+        ],
+        "title": "SummaryResponse",
+        "type": "object"
+      },
+      "TripCountsOut": {
+        "properties": {
+          "cancelled": {
+            "title": "Cancelled",
+            "type": "integer"
+          },
+          "missing": {
+            "title": "Missing",
+            "type": "integer"
+          },
+          "not_yet_due": {
+            "title": "Not Yet Due",
+            "type": "integer"
+          },
+          "ran": {
+            "title": "Ran",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "unknown": {
+            "title": "Unknown",
+            "type": "integer"
+          },
+          "unplanned": {
+            "title": "Unplanned",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "ran",
+          "cancelled",
+          "missing",
+          "unknown",
+          "not_yet_due",
+          "unplanned"
+        ],
+        "title": "TripCountsOut",
+        "type": "object"
+      },
+      "TripOut": {
+        "properties": {
+          "departures": {
+            "items": {
+              "$ref": "#/components/schemas/DepartureOut"
+            },
+            "title": "Departures",
+            "type": "array"
+          },
+          "destination": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Destination"
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direction"
+          },
+          "journey_number": {
+            "title": "Journey Number",
+            "type": "integer"
+          },
+          "operating_day": {
+            "format": "date",
+            "title": "Operating Day",
+            "type": "string"
+          },
+          "planned": {
+            "title": "Planned",
+            "type": "boolean"
+          },
+          "planned_start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned Start"
+          },
+          "planning_number": {
+            "title": "Planning Number",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          }
+        },
+        "required": [
+          "operating_day",
+          "planning_number",
+          "journey_number",
+          "planned",
+          "direction",
+          "destination",
+          "planned_start",
+          "status",
+          "departures"
+        ],
+        "title": "TripOut",
+        "type": "object"
+      },
+      "TripsResponse": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          },
+          "trips": {
+            "items": {
+              "$ref": "#/components/schemas/TripOut"
+            },
+            "title": "Trips",
+            "type": "array"
+          }
+        },
+        "required": [
+          "meta",
+          "trips"
+        ],
+        "title": "TripsResponse",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "summary": "Can I trust this line right now? Trips and delays of Dutch public transport.",
+    "title": "ov-reliability",
+    "version": "1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/v1/lines": {
+      "get": {
+        "operationId": "lines_v1_lines_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Lines"
+      }
+    },
+    "/v1/lines/{operator}/{mode}/{code}/summary": {
+      "get": {
+        "operationId": "summary_v1_lines__operator___mode___code__summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "operator",
+            "required": true,
+            "schema": {
+              "title": "Operator",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "mode",
+            "required": true,
+            "schema": {
+              "title": "Mode",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            }
+          },
+          {
+            "description": "ISO 8601 with a UTC offset; send '+' as %2B",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ISO 8601 with a UTC offset; send '+' as %2B",
+              "title": "From"
+            }
+          },
+          {
+            "description": "ISO 8601 with a UTC offset; send '+' as %2B",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ISO 8601 with a UTC offset; send '+' as %2B",
+              "title": "To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Direction"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Direction"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Summary"
+      }
+    },
+    "/v1/lines/{operator}/{mode}/{code}/trips": {
+      "get": {
+        "operationId": "trips_v1_lines__operator___mode___code__trips_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "operator",
+            "required": true,
+            "schema": {
+              "title": "Operator",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "mode",
+            "required": true,
+            "schema": {
+              "title": "Mode",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "title": "Code",
+              "type": "string"
+            }
+          },
+          {
+            "description": "ISO 8601 with a UTC offset; send '+' as %2B",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ISO 8601 with a UTC offset; send '+' as %2B",
+              "title": "From"
+            }
+          },
+          {
+            "description": "ISO 8601 with a UTC offset; send '+' as %2B",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ISO 8601 with a UTC offset; send '+' as %2B",
+              "title": "To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Direction"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Direction"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Trips"
+      }
+    }
+  }
+}

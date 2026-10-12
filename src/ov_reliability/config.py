@@ -158,6 +158,9 @@ class LinePattern:
     def __str__(self) -> str:
         return f"{self.operator}/{self.mode}/{self.code}"
 
+    def matches(self, operator: str, mode: str, code: str) -> bool:
+        return self.covers(LinePattern(operator, mode, code))
+
     def covers(self, other: "LinePattern") -> bool:
         """True when every line `other` matches is matched by this pattern."""
         return (
@@ -239,6 +242,22 @@ class ApiConfig(_Section):
             if live and dead:
                 raise ValueError(f"line {line} is in an [[api.realtime]] entry and in no_realtime")
         return self
+
+    def serves(self, operator: str, mode: str, code: str) -> bool:
+        return any(pattern.matches(operator, mode, code) for pattern in self.lines)
+
+    def realtime_for(self, operator: str, mode: str, code: str) -> RealtimeSource | None:
+        """Where a line's real-time data comes from; None when it has none."""
+        # no_realtime may carve lines out of a realtime entry, so it is asked first.
+        if any(pattern.matches(operator, mode, code) for pattern in self.no_realtime):
+            return None
+        for source in self.realtime:
+            if any(pattern.matches(operator, mode, code) for pattern in source.lines):
+                return source
+        return None
+
+    def ignored(self, operator: str) -> set[str]:
+        return {number for owner, number in self.ignore_planning_numbers if owner == operator}
 
 
 class Config(_Section):
