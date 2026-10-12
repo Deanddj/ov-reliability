@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PublicationDelivery xmlns="http://www.netex.org.uk/netex" version="1.0">
+  <PublicationTimestamp>2026-10-01T09:00:00</PublicationTimestamp>
+  <ParticipantRef>TEST</ParticipantRef>
+  <dataObjects>
+    <CompositeFrame id="NL:T:CompositeFrame:1" version="1">
+      <ValidBetween>
+        <FromDate>2026-10-05T00:00:00</FromDate>
+        <ToDate>2026-10-11T00:00:00</ToDate>
+      </ValidBetween>
+      <frames>
+        <ServiceFrame id="NL:T:ServiceFrame:1" version="1">
+          <routes>
+            <Route id="NL:T:Route:3out" version="1">
+              <LineRef ref="NL:T:Line:3" version="1"/>
+              <DirectionType>outbound</DirectionType>
+            </Route>
+            <Route id="NL:T:Route:3in" version="1">
+              <LineRef ref="NL:T:Line:3" version="1"/>
+              <DirectionType>inbound</DirectionType>
+            </Route>
+            <Route id="NL:T:Route:53" version="1">
+              <LineRef ref="NL:T:Line:53" version="1"/>
+              <DirectionType>outbound</DirectionType>
+            </Route>
+            <Route id="NL:T:Route:4" version="1">
+              <LineRef ref="NL:T:Line:4" version="1"/>
+            </Route>
+          </routes>
+          <lines>
+            <Line id="NL:T:Line:3" version="1">
+              <privateCodes>
+                <PrivateCode type="LinePlanningNumber">3</PrivateCode>
+              </privateCodes>
+              <Name>Zoetermeer - Loosduinen</Name>
+              <TransportMode>tram</TransportMode>
+              <PublicCode>3</PublicCode>
+            </Line>
+            <Line id="NL:T:Line:53" version="1">
+              <privateCodes>
+                <PrivateCode type="LinePlanningNumber">53</PrivateCode>
+              </privateCodes>
+              <Name>Zoetermeer - Den Haag Centraal</Name>
+              <TransportMode>tram</TransportMode>
+              <PublicCode>3</PublicCode>
+            </Line>
+            <Line id="NL:T:Line:4" version="1">
+              <privateCodes>
+                <PrivateCode type="LinePlanningNumber">4</PrivateCode>
+              </privateCodes>
+              <Name>Lansingerland - Uithof</Name>
+              <TransportMode>tram</TransportMode>
+              <PublicCode>4</PublicCode>
+            </Line>
+          </lines>
+          <destinationDisplays>
+            <DestinationDisplay id="NL:T:DestinationDisplay:1" version="1">
+              <Name>Zoetermeer</Name>
+              <FrontText>Zoetermeer Centrum</FrontText>
+            </DestinationDisplay>
+            <DestinationDisplay id="NL:T:DestinationDisplay:2" version="1">
+              <Name>Loosduinen</Name>
+              <FrontText>Den Haag Loosduinen</FrontText>
+            </DestinationDisplay>
+          </destinationDisplays>
+          <scheduledStopPoints>
+            <ScheduledStopPoint id="NL:T:ScheduledStopPoint:1" version="1">
+              <privateCodes>
+                <PrivateCode type="UserStopCode">1001</PrivateCode>
+              </privateCodes>
+              <Name>Alpha</Name>
+            </ScheduledStopPoint>
+            <ScheduledStopPoint id="NL:T:ScheduledStopPoint:2" version="1">
+              <privateCodes>
+                <PrivateCode type="UserStopCode">1002</PrivateCode>
+              </privateCodes>
+              <Name>Beta</Name>
+            </ScheduledStopPoint>
+            <ScheduledStopPoint id="NL:T:ScheduledStopPoint:3" version="1">
+              <privateCodes>
+                <PrivateCode type="UserStopCode">1003</PrivateCode>
+              </privateCodes>
+              <Name>Gamma</Name>
+            </ScheduledStopPoint>
+          </scheduledStopPoints>
+          <journeyPatterns>
+            <ServiceJourneyPattern id="NL:T:ServiceJourneyPattern:3out" version="1">
+              <RouteRef ref="NL:T:Route:3out" version="1"/>
+              <DestinationDisplayRef ref="NL:T:DestinationDisplay:1" version="1"/>
+              <pointsInSequence>
+                <StopPointInJourneyPattern id="NL:T:StopPointInJourneyPattern:3out-1" version="1" order="1">
+                  <ScheduledStopPointRef ref="NL:T:ScheduledStopPoint:1" version="1"/>
+                  <OnwardTimingLinkRef ref="NL:T:TimingLink:1-T1" version="1"/>
+                </StopPointInJourneyPattern>
+                <TimingPointInJourneyPattern id="NL:T:TimingPointInJourneyPattern:3out-2" version="1" order="2">
+                  <TimingPointRef ref="NL:T:TimingPoint:T1" version="1"/>
+                  <OnwardTimingLinkRef ref="NL:T:TimingLink:T1-2" version="1"/>
+                </TimingPointInJourneyPattern>
+                <StopPointInJourneyPattern id="NL:T:StopPointInJourneyPattern:3out-3" version="1" order="3">
+                  <ScheduledStopPointRef ref="NL:T:ScheduledStopPoint:2" version="1"/>
+                  <OnwardTimingLinkRef ref="NL:T:TimingLink:2-3" version="1"/>
+                </StopPointInJourneyPattern>
+                <StopPointInJourneyPattern id="NL:T:StopPointInJourneyPattern:3out-4" version="1" order="4">
+                  <ScheduledStopPointRef ref="NL:T:ScheduledStopPoint:3" version="1"/>
+                </StopPointInJourneyPattern>
+              </pointsInSequence>
+            </ServiceJourneyPattern>
+            <ServiceJourneyPattern id="NL:T:ServiceJourneyPattern:3in" version="1">
+              <RouteRef ref="NL:T:Route:3in" version="1"/>
+              <DestinationDisplayRef ref="NL:T:DestinationDisplay:2" version="1"/>
+              <pointsInSequence>
+                <StopPointInJourneyPattern id="NL:T:StopPointInJourneyPattern:3in-1" version="1">
+                  <ScheduledStopPointRef ref="NL:T:ScheduledStopPoint:3" version="1"/>
+                  <OnwardTimingLinkRef ref="NL:T:TimingLink:3-2" version="1"/>
+                </StopPointInJourneyPattern>
+                <StopPointInJourneyPattern id="NL:T:StopPointInJourneyPattern:3in-2" version="1">
+                  <ScheduledStopPointRef ref="NL:T:ScheduledStopPoint:2" version="1"/>
+                  <OnwardTimingLinkRef ref="NL:T:TimingLink:2-1" version="1"/>
+                </StopPointInJourneyPattern>
+                <StopPointInJourneyPattern id="NL:T:StopPointInJourneyPattern:3in-3" version="1">
+                  <ScheduledStopPointRef ref="NL:T:ScheduledStopPoint:1" version="1"/>
+                </StopPointInJourneyPattern>
+              </pointsInSequence>
+            </ServiceJourneyPattern>
+            <ServiceJourneyPattern id="NL:T:ServiceJourneyPattern:53" version="1">
+              <RouteRef ref="NL:T:Route:53" version="1"/>
+              <DestinationDisplayRef ref="NL:T:DestinationDisplay:1" version="1"/>
+              <pointsInSequence>
+                <StopPointInJourneyPattern id="NL:T:StopPointInJourneyPattern:53-1" version="1">
+                  <ScheduledStopPointRef ref="NL:T:ScheduledStopPoint:1" version="1"/>
+                  <OnwardTimingLinkRef ref="NL:T:TimingLink:1-2" version="1"/>
+                </StopPointInJourneyPattern>
+                <StopPointInJourneyPattern id="NL:T:StopPointInJourneyPattern:53-2" version="1">
+                  <ScheduledStopPointRef ref="NL:T:ScheduledStopPoint:2" version="1"/>
+                </StopPointInJourneyPattern>
+              </pointsInSequence>
+            </ServiceJourneyPattern>
+            <ServiceJourneyPattern id="NL:T:ServiceJourneyPattern:4" version="1">
+              <RouteRef ref="NL:T:Route:4" version="1"/>
+              <pointsInSequence>
+                <StopPointInJourneyPattern id="NL:T:StopPointInJourneyPattern:4-1" version="1">
+                  <ScheduledStopPointRef ref="NL:T:ScheduledStopPoint:1" version="1"/>
+                  <OnwardTimingLinkRef ref="NL:T:TimingLink:1-2" version="1"/>
+                </StopPointInJourneyPattern>
+                <StopPointInJourneyPattern id="NL:T:StopPointInJourneyPattern:4-2" version="1">
+                  <ScheduledStopPointRef ref="NL:T:ScheduledStopPoint:2" version="1"/>
+                </StopPointInJourneyPattern>
+              </pointsInSequence>
+            </ServiceJourneyPattern>
+          </journeyPatterns>
+          <timeDemandTypes>
+            <TimeDemandType id="NL:T:TimeDemandType:1" version="1">
+              <runTimes>
+                <JourneyRunTime id="NL:T:JourneyRunTime:1-1" version="1">
+                  <TimingLinkRef ref="NL:T:TimingLink:1-T1" version="1"/>
+                  <RunTime>PT1M30.5S</RunTime>
+                </JourneyRunTime>
+                <JourneyRunTime id="NL:T:JourneyRunTime:1-2" version="1">
+                  <TimingLinkRef ref="NL:T:TimingLink:T1-2" version="1"/>
+                  <RunTime>PT45S</RunTime>
+                </JourneyRunTime>
+                <JourneyRunTime id="NL:T:JourneyRunTime:1-3" version="1">
+                  <TimingLinkRef ref="NL:T:TimingLink:2-3" version="1"/>
+                  <RunTime>PT2M</RunTime>
+                </JourneyRunTime>
+              </runTimes>
+              <waitTimes>
+                <JourneyWaitTime id="NL:T:JourneyWaitTime:1-1" version="1">
+                  <TimingPointRef ref="NL:T:TimingPoint:T1" version="1"/>
+                  <WaitTime>PT20S</WaitTime>
+                </JourneyWaitTime>
+                <JourneyWaitTime id="NL:T:JourneyWaitTime:1-2" version="1">
+                  <ScheduledStopPointRef ref="NL:T:ScheduledStopPoint:2" version="1"/>
+                  <WaitTime>PT1M</WaitTime>
+                </JourneyWaitTime>
+              </waitTimes>
+            </TimeDemandType>
+            <TimeDemandType id="NL:T:TimeDemandType:2" version="1">
+              <runTimes>
+                <JourneyRunTime id="NL:T:JourneyRunTime:2-1" version="1">
+                  <TimingLinkRef ref="NL:T:TimingLink:3-2" version="1"/>
+                  <RunTime>PT3M</RunTime>
+                </JourneyRunTime>
+                <JourneyRunTime id="NL:T:JourneyRunTime:2-2" version="1">
+                  <TimingLinkRef ref="NL:T:TimingLink:2-1" version="1"/>
+                  <RunTime>PT2M</RunTime>
+                </JourneyRunTime>
+              </runTimes>
+            </TimeDemandType>
+            <TimeDemandType id="NL:T:TimeDemandType:3" version="1">
+              <runTimes>
+                <JourneyRunTime id="NL:T:JourneyRunTime:3-1" version="1">
+                  <TimingLinkRef ref="NL:T:TimingLink:1-2" version="1"/>
+                  <RunTime>PT5M</RunTime>
+                </JourneyRunTime>
+              </runTimes>
+            </TimeDemandType>
+          </timeDemandTypes>
+        </ServiceFrame>
+        <TimetableFrame id="NL:T:TimetableFrame:1" version="1">
+          <contentValidityConditions>
+            <AvailabilityCondition id="NL:T:AvailabilityCondition:week" version="1">
+              <FromDate>2026-10-03T00:00:00</FromDate>
+              <ToDate>2026-10-12T00:00:00</ToDate>
+              <ValidDayBits>1011111111</ValidDayBits>
+            </AvailabilityCondition>
+            <AvailabilityCondition id="NL:T:AvailabilityCondition:sunday" version="1">
+              <FromDate>2026-10-05T00:00:00</FromDate>
+              <ToDate>2026-10-11T00:00:00</ToDate>
+              <ValidDayBits>0000001</ValidDayBits>
+            </AvailabilityCondition>
+          </contentValidityConditions>
+          <vehicleJourneys>
+            <ServiceJourney id="NL:T:ServiceJourney:3001" version="1">
+              <validityConditions>
+                <AvailabilityConditionRef ref="NL:T:AvailabilityCondition:week" version="1"/>
+              </validityConditions>
+              <privateCodes>
+                <PrivateCode type="JourneyNumber">3001</PrivateCode>
+              </privateCodes>
+              <DepartureTime>05:31:00</DepartureTime>
+              <DepartureDayOffset>0</DepartureDayOffset>
+              <ServiceJourneyPatternRef ref="NL:T:ServiceJourneyPattern:3out" version="1"/>
+              <TimeDemandTypeRef ref="NL:T:TimeDemandType:1" version="1"/>
+            </ServiceJourney>
+            <ServiceJourney id="NL:T:ServiceJourney:3002" version="1">
+              <validityConditions>
+                <AvailabilityConditionRef ref="NL:T:AvailabilityCondition:week" version="1"/>
+              </validityConditions>
+              <privateCodes>
+                <PrivateCode type="JourneyNumber">3002</PrivateCode>
+              </privateCodes>
+              <DepartureTime>23:50:00</DepartureTime>
+              <DepartureDayOffset>0</DepartureDayOffset>
+              <ServiceJourneyPatternRef ref="NL:T:ServiceJourneyPattern:3in" version="1"/>
+              <TimeDemandTypeRef ref="NL:T:TimeDemandType:2" version="1"/>
+            </ServiceJourney>
+            <ServiceJourney id="NL:T:ServiceJourney:3003" version="1">
+              <validityConditions>
+                <AvailabilityConditionRef ref="NL:T:AvailabilityCondition:sunday" version="1"/>
+              </validityConditions>
+              <privateCodes>
+                <PrivateCode type="JourneyNumber">3003</PrivateCode>
+              </privateCodes>
+              <DepartureTime>00:10:00</DepartureTime>
+              <DepartureDayOffset>1</DepartureDayOffset>
+              <ServiceJourneyPatternRef ref="NL:T:ServiceJourneyPattern:3out" version="1"/>
+              <TimeDemandTypeRef ref="NL:T:TimeDemandType:1" version="1"/>
+            </ServiceJourney>
+            <ServiceJourney id="NL:T:ServiceJourney:3004" version="1">
+              <validityConditions>
+                <AvailabilityConditionRef ref="NL:T:AvailabilityCondition:sunday" version="1"/>
+              </validityConditions>
+              <privateCodes>
+                <PrivateCode type="JourneyNumber">3004</PrivateCode>
+              </privateCodes>
+              <DepartureTime>02:30:00</DepartureTime>
+              <DepartureDayOffset>0</DepartureDayOffset>
+              <ServiceJourneyPatternRef ref="NL:T:ServiceJourneyPattern:3in" version="1"/>
+              <TimeDemandTypeRef ref="NL:T:TimeDemandType:2" version="1"/>
+            </ServiceJourney>
+            <ServiceJourney id="NL:T:ServiceJourney:53001" version="1">
+              <validityConditions>
+                <AvailabilityConditionRef ref="NL:T:AvailabilityCondition:week" version="1"/>
+              </validityConditions>
+              <privateCodes>
+                <PrivateCode type="JourneyNumber">53001</PrivateCode>
+              </privateCodes>
+              <DepartureTime>07:00:00</DepartureTime>
+              <DepartureDayOffset>0</DepartureDayOffset>
+              <ServiceJourneyPatternRef ref="NL:T:ServiceJourneyPattern:53" version="1"/>
+              <TimeDemandTypeRef ref="NL:T:TimeDemandType:3" version="1"/>
+            </ServiceJourney>
+            <ServiceJourney id="NL:T:ServiceJourney:4001" version="1">
+              <validityConditions>
+                <AvailabilityConditionRef ref="NL:T:AvailabilityCondition:week" version="1"/>
+              </validityConditions>
+              <privateCodes>
+                <PrivateCode type="JourneyNumber">4001</PrivateCode>
+              </privateCodes>
+              <DepartureTime>08:00:00</DepartureTime>
+              <DepartureDayOffset>0</DepartureDayOffset>
+              <ServiceJourneyPatternRef ref="NL:T:ServiceJourneyPattern:4" version="1"/>
+              <TimeDemandTypeRef ref="NL:T:TimeDemandType:3" version="1"/>
+            </ServiceJourney>
+          </vehicleJourneys>
+        </TimetableFrame>
+      </frames>
+    </CompositeFrame>
+  </dataObjects>
+</PublicationDelivery>
