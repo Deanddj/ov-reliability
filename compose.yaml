@@ -49,6 +49,9 @@ services:
 
   postgres:
     image: postgres:18
+    # Vacuum day partitions after 1% new rows instead of 20%, so the API's index-only reads
+    # rarely have to check the table for rows added late in the day.
+    command: ["postgres", "-c", "autovacuum_vacuum_insert_scale_factor=0.01"]
     restart: unless-stopped
     environment:
       POSTGRES_USER: ov

@@ -11,6 +11,11 @@ from ov_reliability.stats.trips import Observations
 
 _TRIP = "operating_day, data_owner, planning_number, journey_number, reinforcement"
 _WHERE = "data_owner = %s AND planning_number = ANY(%s) AND operating_day = ANY(%s)"
+# Every column here must be in stop_events' unique index, so the read never touches the table.
+EVENTS_QUERY = (
+    f"SELECT {_TRIP}, stop_code, passage, event, event_at, punctuality, received_at"
+    f" FROM stop_events WHERE {_WHERE}"
+)
 
 
 class Reader:
@@ -24,11 +29,7 @@ class Reader:
     ) -> dict[TripKey, Observations]:
         params = (owner, list(planning_numbers), list(days))
         events: dict[TripKey, list[StopEvent]] = {}
-        for row in self._conn.execute(
-            f"SELECT {_TRIP}, stop_code, passage, event, event_at, punctuality, received_at"
-            f" FROM stop_events WHERE {_WHERE}",
-            params,
-        ):
+        for row in self._conn.execute(EVENTS_QUERY, params):
             key = TripKey(*row[:5])
             events.setdefault(key, []).append(StopEvent(key, *row[5:]))
         mutations: dict[TripKey, list[Mutation]] = {}

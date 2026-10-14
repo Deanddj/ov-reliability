@@ -175,7 +175,7 @@ def test_migration_gap_is_refused(database: psycopg.Connection, tmp_path: Path) 
 
 def test_unknown_applied_migration_is_refused(database: psycopg.Connection, tmp_path: Path) -> None:
     (tmp_path / "001_init.sql").write_text("SELECT 1", encoding="utf-8")
-    database.execute("INSERT INTO schema_migrations (version) VALUES (2)")
+    database.execute("INSERT INTO schema_migrations (version) VALUES (3)")
     with pytest.raises(MigrationError, match="doesn't know"):
         migrate(database, tmp_path)
 
