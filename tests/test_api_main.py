@@ -10,6 +10,7 @@ from ov_reliability.api import __main__ as entry
 from ov_reliability.runtime import EXIT_BAD_CONFIG
 
 REPO_CONFIG = (Path(__file__).parents[1] / "config.toml").read_text(encoding="utf-8")
+SERVED = 'lines = ["htm/*/*", "gvb/tram/*", "gvb/bus/*"]'
 
 
 def repo_config(tmp_path: Path) -> str:
@@ -49,7 +50,7 @@ def test_serves_the_app(
     assert timetables.is_dir()
     assert entry.main() == 0
     assert (served["host"], served["port"]) == ("0.0.0.0", 8000)
-    response = TestClient(served["app"]).get("/v1/lines/gvb/tram/2/trips")
+    response = TestClient(served["app"]).get("/v1/lines/gvb/metro/52/trips")
     assert response.status_code == 404
 
 
@@ -57,8 +58,8 @@ def test_serves_the_app(
     ("old", "new", "message"),
     [
         ("missing_after_minutes = 15", "missing_after_minutes = 0", "missing_after_minutes"),
-        ('lines = ["htm/*/*"]', 'lines = ["htm/tram"]', "operator/mode/code"),
-        ('lines = ["htm/*/*"]', 'lines = ["gvb/tram/2"]', "gvb/tram/2 is in no"),
+        (SERVED, 'lines = ["htm/tram"]', "operator/mode/code"),
+        (SERVED, 'lines = ["gvb/metro/52"]', "gvb/metro/52 is in no"),
         ('timetables"\ncheck_minutes', 'nonexistent"\ncheck_minutes', "does not exist"),
     ],
 )
