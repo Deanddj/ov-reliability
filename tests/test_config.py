@@ -42,8 +42,10 @@ def test_repository_config_is_valid() -> None:
         LinePattern("gvb", "tram", "*"),
         LinePattern("gvb", "bus", "*"),
         LinePattern("gvb", "metro", "*"),
+        LinePattern("ret", "*", "*"),
     )
     assert api.realtime_for("gvb", "bus", "461") is None
+    assert api.realtime_for("ret", "bus", "701") is None
     metro = api.realtime_for("gvb", "metro", "52")
     assert metro is not None
     assert metro.recorder == "collector-siri"
@@ -373,7 +375,7 @@ def test_api_line_operator_must_have_timetables(tmp_path: Path) -> None:
     path = _repo_config_with(
         tmp_path,
         ('lines = ["htm/*/*",', 'lines = ["abc/bus/1", "htm/*/*",'),
-        ('no_realtime = ["gvb', 'no_realtime = ["abc/*/*", "gvb'),
+        ("no_realtime = [\n", 'no_realtime = ["abc/*/*",\n'),
     )
     with pytest.raises(ValueError, match=re.escape("abc/bus/1: operator not in [timetables]")):
         load_api_config(path)

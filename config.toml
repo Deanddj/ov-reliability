@@ -56,10 +56,17 @@ default_range_minutes = 120
 max_range_days = 7
 missing_after_minutes = 15
 # Lines the API serves, as "operator/mode/code". "*" matches any mode or code.
-lines = ["htm/*/*", "gvb/tram/*", "gvb/bus/*", "gvb/metro/*"]
+lines = ["htm/*/*", "gvb/tram/*", "gvb/bus/*", "gvb/metro/*", "ret/*/*"]
 # Lines with no real-time data anywhere: their trips are "unknown", never "missing".
-# GVB 461, 463 and 464 are the free Gelderlandplein buses, which publish nothing.
-no_realtime = ["gvb/bus/461", "gvb/bus/463", "gvb/bus/464"]
+# GVB 461, 463 and 464 are the free Gelderlandplein buses, which publish nothing. RET's
+# neighbourhood buses (547, 567, 569, 612), shuttle 701 and its small suburban lines publish
+# nothing either.
+no_realtime = [
+  "gvb/bus/461", "gvb/bus/463", "gvb/bus/464",
+  "ret/bus/52", "ret/bus/547", "ret/bus/567", "ret/bus/569", "ret/bus/602", "ret/bus/603",
+  "ret/bus/606", "ret/bus/607", "ret/bus/608", "ret/bus/609", "ret/bus/610", "ret/bus/612",
+  "ret/bus/701",
+]
 # Planning numbers in the timetable that are not a service riders see. HTM plans these every
 # day but never runs them; 98 and 99 are test lines.
 ignore_planning_numbers = [
