@@ -4,7 +4,7 @@ Can I trust this tram right now? An API that compares the timetable of Dutch tra
 metros with what actually happened, trip by trip, from the real-time data operators publish
 through [NDOV Loket](https://ndovloket.nl).
 
-Live at **https://ov.deanj.dev** for HTM tram 3, 4 and 34 in The Hague. More lines follow.
+Live at **https://ov.deanj.dev** for all HTM trams and buses in The Hague. More operators follow.
 
 ## Example
 

@@ -49,7 +49,7 @@ def test_serves_the_app(
     assert timetables.is_dir()
     assert entry.main() == 0
     assert (served["host"], served["port"]) == ("0.0.0.0", 8000)
-    response = TestClient(served["app"]).get("/v1/lines/htm/bus/1/trips")
+    response = TestClient(served["app"]).get("/v1/lines/gvb/tram/2/trips")
     assert response.status_code == 404
 
 
@@ -57,8 +57,8 @@ def test_serves_the_app(
     ("old", "new", "message"),
     [
         ("missing_after_minutes = 15", "missing_after_minutes = 0", "missing_after_minutes"),
-        ('lines = ["htm/tram/3"', 'lines = ["htm/tram"', "operator/mode/code"),
-        ('lines = ["htm/tram/3"', 'lines = ["gvb/tram/2"', "gvb/tram/2 is in no"),
+        ('lines = ["htm/*/*"]', 'lines = ["htm/tram"]', "operator/mode/code"),
+        ('lines = ["htm/*/*"]', 'lines = ["gvb/tram/2"]', "gvb/tram/2 is in no"),
         ('timetables"\ncheck_minutes', 'nonexistent"\ncheck_minutes', "does not exist"),
     ],
 )
