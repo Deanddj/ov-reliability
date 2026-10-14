@@ -132,6 +132,32 @@ def test_lines(timetables: Path) -> None:
     }
 
 
+def test_an_operator_can_be_part_of_another(timetables: Path) -> None:
+    # The same file under another series: read too, its planning numbers would clash.
+    bus = "NeTEx_HTM_Bus_20261001_20261005_new.xml.gz"
+    write_netex(timetables, name=bus)
+    with (timetables / "index.jsonl").open("a") as index:
+        index.write(index_line(f"htm/{bus}"))
+    store = FakeStore()
+    test_client = client(
+        timetables,
+        store,
+        lines=["haag/tram/3"],
+        operators={"haag": {"timetables": "htm", "series": ["Rail"]}},
+        ignore_planning_numbers=["haag/53"],
+        realtime=[{"lines": ["haag/*/*"], "recorder": "collector", "topics": ["/RIG/"]}],
+    )
+    lines = get(test_client, "/v1/lines")["lines"]
+    assert [(line["operator"], line["code"], line["planning_numbers"]) for line in lines] == [
+        ("haag", "3", ["3"])
+    ]
+    body = get(test_client, "/v1/lines/haag/tram/3/trips")
+    assert set(map(tuple, body["meta"]["timetable_files"].values())) == {(NAME,)}
+    assert body["meta"]["line"]["planning_numbers"] == ["3"]
+    assert store.calls[0].startswith("observations HTM ['3', '53'] ")
+    assert test_client.get("/v1/lines/htm/tram/3/trips").status_code == 404
+
+
 def test_lines_leave_out_ignored_planning_numbers(timetables: Path) -> None:
     body = get(client(timetables, ignore_planning_numbers=["htm/53"]), "/v1/lines")
     assert body["lines"][0]["planning_numbers"] == ["3"]

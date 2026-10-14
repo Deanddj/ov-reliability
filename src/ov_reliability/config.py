@@ -203,6 +203,13 @@ class RealtimeSource(_Section):
         return topics
 
 
+class OperatorSource(_Section):
+    """An API operator that is part of a timetable operator: some of its NeTEx series."""
+
+    timetables: str = Field(pattern=OPERATOR.pattern)
+    series: tuple[str, ...] = Field(min_length=1)
+
+
 class ApiConfig(_Section):
     default_range_minutes: int = Field(ge=1)
     max_range_days: int = Field(ge=1)
@@ -212,6 +219,15 @@ class ApiConfig(_Section):
     # Kept as "operator/planning number" pairs (decision 069).
     ignore_planning_numbers: tuple[tuple[str, str], ...]
     realtime: tuple[RealtimeSource, ...]
+    operators: dict[str, OperatorSource] = {}
+
+    @field_validator("operators")
+    @classmethod
+    def _check_operators(cls, operators: dict[str, OperatorSource]) -> dict[str, OperatorSource]:
+        for name in operators:
+            if not OPERATOR.match(name):
+                raise ValueError(f"operator {name!r} must match {OPERATOR.pattern}")
+        return operators
 
     @field_validator("ignore_planning_numbers", mode="before")
     @classmethod
@@ -255,6 +271,13 @@ class ApiConfig(_Section):
             if any(pattern.matches(operator, mode, code) for pattern in source.lines):
                 return source
         return None
+
+    def timetables_of(self, operator: str) -> tuple[str, frozenset[str] | None]:
+        """The timetable operator an API operator is read from, and which series (None: all)."""
+        source = self.operators.get(operator)
+        if source is None:
+            return operator, None
+        return source.timetables, frozenset(source.series)
 
     def ignored(self, operator: str) -> set[str]:
         return {number for owner, number in self.ignore_planning_numbers if owner == operator}
@@ -309,7 +332,7 @@ def load_api_config(path: Path) -> ApiConfig:
     # The plan comes from the archived timetables and the gaps from what the loader stores, so
     # a line outside them would answer "unknown" forever instead of failing here.
     for line in api.lines:
-        if line.operator not in timetables.operators:
+        if api.timetables_of(line.operator)[0] not in timetables.operators:
             raise ValueError(f"line {line}: operator not in [timetables] operators")
     recorders = {archive.recorder for archive in loader.archives}
     for source in api.realtime:

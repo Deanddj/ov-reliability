@@ -26,6 +26,7 @@ from ov_reliability.timetables.plan import (
     PlannedStop,
     choose_files,
     load_plan,
+    load_timetables,
     planned_trips,
     to_utc,
 )
@@ -265,3 +266,22 @@ def test_load_plan_newer_file_of_a_series_wins(tmp_path: Path) -> None:
     assert plan.files == (newer,)
     assert 3101 in {t.journey_number for t in plan.trips}
     assert 3001 not in {t.journey_number for t in plan.trips}
+
+
+def test_load_timetables_of_some_series(tmp_path: Path) -> None:
+    bus = "NeTEx_HTM_Bus_20261001_20261005_new.xml.gz"
+    write_netex(tmp_path)
+    write_netex(tmp_path, name=bus)
+    (tmp_path / "index.jsonl").write_text(index_line(f"htm/{NAME}") + index_line(f"htm/{bus}"))
+    parsed: list[str] = []
+
+    def read(path: Path) -> TimetableFile:
+        parsed.append(path.name)
+        return read_timetable(path)
+
+    found = load_timetables(tmp_path, "htm", SUNDAY, read, series={"Bus"})
+    assert [f.header.file_name for f in found] == [bus]
+    assert parsed == [bus]
+    assert len(load_timetables(tmp_path, "htm", SUNDAY)) == 2
+    with pytest.raises(NoTimetableError):
+        load_timetables(tmp_path, "htm", SUNDAY, series={"Ferry"})

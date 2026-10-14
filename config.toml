@@ -56,7 +56,9 @@ default_range_minutes = 120
 max_range_days = 7
 missing_after_minutes = 15
 # Lines the API serves, as "operator/mode/code". "*" matches any mode or code.
-lines = ["htm/*/*", "gvb/tram/*", "gvb/bus/*", "gvb/metro/*", "ret/*/*"]
+lines = [
+  "htm/*/*", "gvb/tram/*", "gvb/bus/*", "gvb/metro/*", "ret/*/*", "uov/bus/*", "uov/tram/*",
+]
 # Lines with no real-time data anywhere: their trips are "unknown", never "missing".
 # GVB 461, 463 and 464 are the free Gelderlandplein buses, which publish nothing. RET's
 # neighbourhood buses (547, 567, 569, 612), shuttle 701 and its small suburban lines publish
@@ -68,10 +70,18 @@ no_realtime = [
   "ret/bus/701",
 ]
 # Planning numbers in the timetable that are not a service riders see. HTM plans these every
-# day but never runs them; 98 and 99 are test lines.
+# day but never runs them; 98 and 99 are test lines. U-flex is on demand: its journeys in the
+# timetable are bookable time slots, not trips.
 ignore_planning_numbers = [
   "htm/54", "htm/67", "htm/68", "htm/75", "htm/89", "htm/90", "htm/97", "htm/98", "htm/99",
+  "uov/U903", "uov/U913", "uov/U922", "uov/U927", "uov/U944", "uov/U945", "uov/U957",
+  "uov/U958", "uov/U959", "uov/U978",
 ]
+
+# Operators that are part of a timetable operator. U-OV is Connexxion's Utrecht concession, the
+# NeTEx series UBI; Connexxion's other regions use the same public codes.
+[api.operators]
+uov = { timetables = "cxx", series = ["UBI"] }
 
 # Which recorder and topics carry the real-time data of which lines.
 [[api.realtime]]
@@ -83,6 +93,17 @@ topics = ["/RIG/KV6posinfo", "/RIG/KV17cvlinfo"]
 lines = ["gvb/tram/*", "gvb/bus/*"]
 recorder = "collector"
 topics = ["/GVB/KV6posinfo", "/GVB/KV17cvlinfo"]
+
+[[api.realtime]]
+lines = ["uov/bus/*"]
+recorder = "collector"
+topics = ["/CXX/KV6posinfo", "/CXX/KV17cvlinfo"]
+
+# The Utrecht sneltram is published by its own supplier, with data owner CXX.
+[[api.realtime]]
+lines = ["uov/tram/*"]
+recorder = "collector"
+topics = ["/IVU/KV6posinfo", "/IVU/KV17cvlinfo"]
 
 # The GVB metro is only published in SIRI.
 [[api.realtime]]

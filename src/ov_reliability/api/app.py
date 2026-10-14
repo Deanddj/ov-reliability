@@ -76,7 +76,7 @@ def create_app(
         found: list[LineOut] = []
         for operator in sorted({pattern.operator for pattern in settings.lines}):
             grouped: dict[tuple[str, str], dict[str, str]] = {}
-            for timetable in _timetables(plans, operator, today):
+            for timetable in _timetables(plans, settings.timetables_of(operator), today):
                 for number, line in timetable.lines.items():
                     if number in settings.ignored(operator):
                         continue
@@ -144,13 +144,16 @@ def create_app(
             )
         except RangeError as exc:
             raise HTTPException(422, str(exc)) from None
-        line = LineName(operator, mode, code)
+        timetables_of = settings.timetables_of(operator)
+        line = LineName(timetables_of[0], mode, code)
         ignored = settings.ignored(operator)
         planned: list[PlannedTrip] = []
         numbers: set[str] = set()
         files: dict[str, list[str]] = {}
         for day in render.operating_days(since, until):
-            timetables = [t for t in _timetables(plans, operator, day) if line_numbers(t, line)]
+            timetables = [
+                t for t in _timetables(plans, timetables_of, day) if line_numbers(t, line)
+            ]
             files[day.isoformat()] = [t.header.file_name for t in timetables]
             numbers |= {n for t in timetables for n in line_numbers(t, line)}
             planned += [
@@ -171,7 +174,7 @@ def create_app(
             with connect() as store:
                 # Ignored planning numbers are read too: if they run, they show as unplanned.
                 observations = store.observations(
-                    operator.upper(), sorted(numbers), render.operating_days(since, until)
+                    line.operator.upper(), sorted(numbers), render.operating_days(since, until)
                 )
                 markers = store.markers(source.recorder, gaps_from, now)
                 until_by_recorder = {
@@ -217,9 +220,11 @@ def create_app(
     return app
 
 
-def _timetables(plans: PlanCache, operator: str, day: date) -> list[TimetableFile]:
+def _timetables(
+    plans: PlanCache, source: tuple[str, frozenset[str] | None], day: date
+) -> list[TimetableFile]:
     try:
-        return plans.timetables(operator, day)
+        return plans.timetables(source[0], day, source[1])
     except NoTimetableError as exc:
         # Without a plan, "missing" and "not scheduled" can't be told apart.
         raise HTTPException(503, str(exc)) from None
