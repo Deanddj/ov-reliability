@@ -47,12 +47,16 @@ poll_seconds = 5
 recorder = "collector"
 directory = "/data/archive"
 
+[[loader.archives]]
+recorder = "collector-siri"
+directory = "/data/archive-siri"
+
 [api]
 default_range_minutes = 120
 max_range_days = 7
 missing_after_minutes = 15
 # Lines the API serves, as "operator/mode/code". "*" matches any mode or code.
-lines = ["htm/*/*", "gvb/tram/*", "gvb/bus/*"]
+lines = ["htm/*/*", "gvb/tram/*", "gvb/bus/*", "gvb/metro/*"]
 # Lines with no real-time data anywhere: their trips are "unknown", never "missing".
 # GVB 461, 463 and 464 are the free Gelderlandplein buses, which publish nothing.
 no_realtime = ["gvb/bus/461", "gvb/bus/463", "gvb/bus/464"]
@@ -72,3 +76,9 @@ topics = ["/RIG/KV6posinfo", "/RIG/KV17cvlinfo"]
 lines = ["gvb/tram/*", "gvb/bus/*"]
 recorder = "collector"
 topics = ["/GVB/KV6posinfo", "/GVB/KV17cvlinfo"]
+
+# The GVB metro is only published in SIRI.
+[[api.realtime]]
+lines = ["gvb/metro/*"]
+recorder = "collector-siri"
+topics = ["/GVB/EstimatedTimetableDelivery"]

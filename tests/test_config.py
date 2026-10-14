@@ -35,14 +35,18 @@ def test_repository_config_is_valid() -> None:
     assert "htm" in timetables.operators
     loader = load_loader_config(REPO_ROOT / "config.toml")
     assert loader.data_owners == ("HTM", "GVB", "RET", "CXX")
-    assert [archive.recorder for archive in loader.archives] == ["collector"]
+    assert [archive.recorder for archive in loader.archives] == ["collector", "collector-siri"]
     api = load_api_config(REPO_ROOT / "config.toml")
     assert api.lines == (
         LinePattern("htm", "*", "*"),
         LinePattern("gvb", "tram", "*"),
         LinePattern("gvb", "bus", "*"),
+        LinePattern("gvb", "metro", "*"),
     )
     assert api.realtime_for("gvb", "bus", "461") is None
+    metro = api.realtime_for("gvb", "metro", "52")
+    assert metro is not None
+    assert metro.recorder == "collector-siri"
     assert ("htm", "54") in api.ignore_planning_numbers
 
 

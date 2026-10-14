@@ -9,6 +9,7 @@ from conftest import fresh_schema
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 from kv6xml import Event, Journey, kv6_message, kv17_message
+from sirixml import Call, Vj, siri_message
 
 from ov_reliability.collector.archive import ArchiveWriter
 from ov_reliability.collector.records import Marker, Message, Record
@@ -160,6 +161,35 @@ def test_restart_anywhere_loads_each_record_once(
             assert contents(broken) == contents(clean)
             [(count,)] = clean.execute("SELECT count(*) FROM stop_events").fetchall()
             assert count == 30
+
+
+def test_rows_keep_their_source(database: psycopg.Connection) -> None:
+    cancelled = Vj(
+        owner="HTM",
+        journey="2",
+        cancelled=True,
+        recorded=(),
+        estimated=(Call(aimed="2026-10-09T10:30:00+02:00"),),
+    )
+    load(
+        database,
+        [
+            [
+                Message(T, "/RIG/KV6posinfo", kv6_message([Event()])),
+                Message(
+                    T,
+                    "/RIG/KV17cvlinfo",
+                    kv17_message(Journey(), [("2026-10-09T09:50", "CANCEL")]),
+                ),
+                Message(T, "/GVB/EstimatedTimetableDelivery", siri_message([Vj(owner="HTM")])),
+                Message(T, "/GVB/EstimatedTimetableDelivery", siri_message([cancelled])),
+            ]
+        ],
+    )
+    events = database.execute("SELECT DISTINCT source FROM stop_events ORDER BY 1").fetchall()
+    assert events == [("KV6",), ("SIRI",)]
+    mutations = database.execute("SELECT DISTINCT source FROM journey_mutations ORDER BY 1")
+    assert mutations.fetchall() == [("KV17",), ("SIRI",)]
 
 
 def test_migrate_twice_is_a_no_op(database: psycopg.Connection) -> None:
