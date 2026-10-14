@@ -52,11 +52,14 @@ default_range_minutes = 120
 max_range_days = 7
 missing_after_minutes = 15
 # Lines the API serves, as "operator/mode/code". "*" matches any mode or code.
-lines = ["htm/tram/3", "htm/tram/4", "htm/tram/34"]
+lines = ["htm/*/*"]
 # Lines with no real-time data anywhere: their trips are "unknown", never "missing".
 no_realtime = []
-# Planning numbers in the timetable that are not a service riders see.
-ignore_planning_numbers = ["htm/54"]
+# Planning numbers in the timetable that are not a service riders see. HTM plans these every
+# day but never runs them; 98 and 99 are test lines.
+ignore_planning_numbers = [
+  "htm/54", "htm/67", "htm/68", "htm/75", "htm/89", "htm/90", "htm/97", "htm/98", "htm/99",
+]
 
 # Which recorder and topics carry the real-time data of which lines.
 [[api.realtime]]
