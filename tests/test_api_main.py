@@ -10,7 +10,7 @@ from ov_reliability.api import __main__ as entry
 from ov_reliability.runtime import EXIT_BAD_CONFIG
 
 REPO_CONFIG = (Path(__file__).parents[1] / "config.toml").read_text(encoding="utf-8")
-SERVED = 'lines = ["htm/*/*", "gvb/tram/*", "gvb/bus/*", "gvb/metro/*"]'
+SERVED = 'lines = ["htm/*/*", "gvb/tram/*", "gvb/bus/*", "gvb/metro/*", "ret/*/*"]'
 
 
 def repo_config(tmp_path: Path) -> str:
@@ -50,7 +50,7 @@ def test_serves_the_app(
     assert timetables.is_dir()
     assert entry.main() == 0
     assert (served["host"], served["port"]) == ("0.0.0.0", 8000)
-    response = TestClient(served["app"]).get("/v1/lines/ret/metro/E/trips")
+    response = TestClient(served["app"]).get("/v1/lines/cxx/bus/U001/trips")
     assert response.status_code == 404
 
 
