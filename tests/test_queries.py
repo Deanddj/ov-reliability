@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime, timedelta
 
 import psycopg
 
-from ov_reliability.api.queries import Reader
+from ov_reliability.api.queries import EVENTS_QUERY, Reader
 from ov_reliability.collector.records import Marker
 from ov_reliability.kv6.parse import Mutation, StopEvent, TripKey
 from ov_reliability.loader.batch import Batch, MarkerRow, SeenSpan
@@ -56,6 +56,15 @@ def test_observations_come_back_per_trip(database: psycopg.Connection) -> None:
     assert found[trip(2)] == Observations(mutations=(cancel,))
     assert found[trip(3, "53")] == Observations(seen=(at(9), at(10)))
     assert Reader(database).observations("RET", ["3"], [DAY]) == {}
+
+
+def test_stop_events_are_read_from_the_index_alone(database: psycopg.Connection) -> None:
+    store(database, events=(StopEvent(trip(1), "A", 0, "DEPARTURE", at(1), 42, at(1.1)),))
+    # A tiny table would be read whole; this asks whether the index can answer on its own.
+    database.execute("SET enable_seqscan = off")
+    database.execute("SET enable_bitmapscan = off")
+    plan = [row[0] for row in database.execute("EXPLAIN " + EVENTS_QUERY, ("HTM", ["3"], [DAY]))]
+    assert any("Index Only Scan" in line for line in plan), plan
 
 
 def test_markers_start_at_the_last_start_before_the_range(database: psycopg.Connection) -> None:
