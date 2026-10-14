@@ -4,7 +4,7 @@ import argparse
 import logging
 import sys
 from collections import Counter
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Collection, Iterable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
@@ -166,8 +166,12 @@ def load_timetables(
     operator: str,
     day: date,
     read: Callable[[Path], TimetableFile] = read_timetable,
+    series: Collection[str] | None = None,
 ) -> list[TimetableFile]:
-    """The files of an operator that are in force on `day`, one per series."""
+    """The files of an operator that are in force on `day`, one per series.
+
+    `series` limits them to those series, so files that aren't needed aren't parsed.
+    """
     headers: list[TimetableHeader] = []
     for entry in _read_index(timetables_dir / INDEX_NAME):
         if entry.operator != operator:
@@ -175,7 +179,9 @@ def load_timetables(
         path = timetables_dir / entry.file
         if not path.is_file():
             raise TimetableError(entry.file, f"is in {INDEX_NAME} but missing")
-        headers.append(read_header(path))
+        header = read_header(path)
+        if series is None or header.series in series:
+            headers.append(header)
     chosen = choose_files(headers, operator, day)
     if not chosen:
         raise NoTimetableError(operator, day)

@@ -43,9 +43,16 @@ def test_repository_config_is_valid() -> None:
         LinePattern("gvb", "bus", "*"),
         LinePattern("gvb", "metro", "*"),
         LinePattern("ret", "*", "*"),
+        LinePattern("uov", "bus", "*"),
+        LinePattern("uov", "tram", "*"),
     )
     assert api.realtime_for("gvb", "bus", "461") is None
     assert api.realtime_for("ret", "bus", "701") is None
+    assert api.timetables_of("uov") == ("cxx", frozenset({"UBI"}))
+    assert api.timetables_of("htm") == ("htm", None)
+    sneltram = api.realtime_for("uov", "tram", "20")
+    assert sneltram is not None
+    assert sneltram.topics == ("/IVU/KV6posinfo", "/IVU/KV17cvlinfo")
     metro = api.realtime_for("gvb", "metro", "52")
     assert metro is not None
     assert metro.recorder == "collector-siri"
@@ -374,11 +381,31 @@ def _repo_config_with(tmp_path: Path, *changes: tuple[str, str]) -> Path:
 def test_api_line_operator_must_have_timetables(tmp_path: Path) -> None:
     path = _repo_config_with(
         tmp_path,
-        ('lines = ["htm/*/*",', 'lines = ["abc/bus/1", "htm/*/*",'),
+        ('lines = [\n  "htm/*/*",', 'lines = [\n  "abc/bus/1", "htm/*/*",'),
         ("no_realtime = [\n", 'no_realtime = ["abc/*/*",\n'),
     )
     with pytest.raises(ValueError, match=re.escape("abc/bus/1: operator not in [timetables]")):
         load_api_config(path)
+
+
+def test_api_operator_part_must_have_timetables(tmp_path: Path) -> None:
+    path = _repo_config_with(tmp_path, ('timetables = "cxx"', 'timetables = "abc"'))
+    with pytest.raises(ValueError, match=re.escape("uov/bus/*: operator not in [timetables]")):
+        load_api_config(path)
+
+
+@pytest.mark.parametrize(
+    "operators",
+    [
+        {"Uov": {"timetables": "cxx", "series": ["UBI"]}},
+        {"uov": {"timetables": "cxx", "series": []}},
+        {"uov": {"timetables": "../cxx", "series": ["UBI"]}},
+        {"uov": {"timetables": "cxx"}},
+    ],
+)
+def test_bad_operators_are_rejected(operators: dict[str, Any]) -> None:
+    with pytest.raises(ValidationError):
+        ApiConfig.model_validate(_api(operators=operators))
 
 
 def test_api_recorder_must_be_loaded(tmp_path: Path) -> None:
