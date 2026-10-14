@@ -115,7 +115,7 @@ def _parse_kv6(root: ET.Element, received_at: datetime, owners: Collection[str])
             try:
                 trip = _trip(fields)
                 at = event_time(_required(fields, "timestamp"), received_at)
-                _check_on_operating_day(trip, at)
+                check_on_operating_day(trip, at)
                 if kind in _STOP_EVENTS:
                     events.append(
                         StopEvent(
@@ -134,7 +134,7 @@ def _parse_kv6(root: ET.Element, received_at: datetime, owners: Collection[str])
     return Parsed(tuple(events), tuple(seen), (), tuple(bad))
 
 
-def _check_on_operating_day(trip: TripKey, at: datetime) -> None:
+def check_on_operating_day(trip: TripKey, at: datetime) -> None:
     # A trip runs on its operating day or, after midnight, the next one. ARR has sent events
     # dated years back; none of the loaded owners ever left this range (findings 2026-10-11).
     local_day = at.astimezone(LOCAL).date()

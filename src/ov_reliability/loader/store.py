@@ -79,7 +79,7 @@ def write_batch(
         if batch.events:
             cur.execute("CREATE TEMP TABLE new_stop_events (LIKE stop_events) ON COMMIT DROP")
             with cur.copy("COPY new_stop_events FROM STDIN") as copy:
-                for e in batch.events:
+                for e, source in batch.events:
                     t = e.trip
                     copy.write_row(
                         (
@@ -94,7 +94,7 @@ def write_batch(
                             e.event_at,
                             e.punctuality,
                             e.received_at,
-                            "KV6",
+                            source,
                         )
                     )
             cur.execute(
@@ -131,7 +131,7 @@ def write_batch(
                 "CREATE TEMP TABLE new_journey_mutations (LIKE journey_mutations) ON COMMIT DROP"
             )
             with cur.copy("COPY new_journey_mutations FROM STDIN") as copy:
-                for m in batch.mutations:
+                for m, source in batch.mutations:
                     t = m.trip
                     copy.write_row(
                         (
@@ -145,7 +145,7 @@ def write_batch(
                             m.passage,
                             m.mutated_at,
                             m.received_at,
-                            "KV17",
+                            source,
                         )
                     )
             cur.execute(

@@ -2,6 +2,7 @@ import base64
 from datetime import UTC, date, datetime
 
 from kv6xml import Event, Journey, kv6_message, kv17_message
+from sirixml import Vj, siri_message
 
 from ov_reliability.collector.records import BadPayload, Marker, Message, Record
 from ov_reliability.kv6.parse import TripKey
@@ -32,13 +33,18 @@ def test_events_sightings_and_mutations() -> None:
             Message(RECEIVED, "/RIG/KV17cvlinfo", cancel),
         ]
     )
-    assert [e.event for e in batch.events] == ["ARRIVAL", "DEPARTURE"]
+    assert [(e.event, source) for e, source in batch.events] == [
+        ("ARRIVAL", "KV6"),
+        ("DEPARTURE", "KV6"),
+    ]
     assert batch.seen == (
         SeenSpan(
             TRIP, datetime(2026, 10, 9, 8, tzinfo=UTC), datetime(2026, 10, 9, 8, 2, tzinfo=UTC)
         ),
     )
-    assert [(m.trip.journey_number, m.mutation) for m in batch.mutations] == [(30002, "CANCEL")]
+    assert [(m.trip.journey_number, m.mutation, source) for m, source in batch.mutations] == [
+        (30002, "CANCEL", "KV17")
+    ]
     assert batch.bad == ()
     assert batch.days == {TODAY}
 
@@ -47,6 +53,22 @@ def test_markers_are_kept_and_other_topics_skipped() -> None:
     marker = Marker(RECEIVED, "started", {"run_id": "r1", "topics": ["/RIG/KV6posinfo"]})
     batch = build([marker, Message(RECEIVED, "/RIG/KV15messages", "<not even xml")])
     assert batch.markers == (MarkerRow(RECEIVED, "started", marker.details),)
+    assert batch.bad == ()
+
+
+def test_siri_estimated_timetables_are_loaded_as_siri() -> None:
+    et = siri_message([Vj(owner="HTM", recorded_at="2026-10-09T10:20:00+02:00")])
+    batch = build(
+        [
+            Message(RECEIVED, "/GVB/EstimatedTimetableDelivery", et),
+            Message(RECEIVED, "/GVB/VehicleMonitoringDelivery", "<not even xml"),
+        ]
+    )
+    assert [(e.event, source) for e, source in batch.events] == [
+        ("ARRIVAL", "SIRI"),
+        ("DEPARTURE", "SIRI"),
+    ]
+    assert [s.trip.journey_number for s in batch.seen] == [79567]
     assert batch.bad == ()
 
 
@@ -71,7 +93,7 @@ def test_days_outside_the_window_are_bad_once_per_message() -> None:
             kv6(Event(day="2026-10-10"), received=datetime(2026, 10, 11, 9, tzinfo=UTC)),
         ]
     )
-    assert [e.trip.operating_day for e in batch.events] == [date(2026, 10, 10)]
+    assert [e.trip.operating_day for e, _ in batch.events] == [date(2026, 10, 10)]
     assert [b.reason for b in batch.bad] == [
         f"operating day {old} is outside the window",
         "operating day 2026-10-11 is outside the window",
@@ -80,7 +102,7 @@ def test_days_outside_the_window_are_bad_once_per_message() -> None:
 
 def test_days_before_the_floor_are_dropped_quietly() -> None:
     batch = build([kv6(Event(day="2026-10-07")), kv6(Event())], floor=date(2026, 10, 8))
-    assert [e.trip.operating_day for e in batch.events] == [TODAY]
+    assert [e.trip.operating_day for e, _ in batch.events] == [TODAY]
     assert batch.bad == ()
 
 

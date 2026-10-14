@@ -101,21 +101,26 @@ The metro recorder writes the same files and markers to its own `archive-siri` v
 
 ## Database
 
-The `loader` service reads the archive files in order and writes to the `postgres` service. It
-remembers how far it got (file and record) in the same transaction as the rows, so a restart
-never loads a message twice or skips one. On its first start it begins with the oldest file in
-the archive.
+The `loader` service reads the files of both archives (`[[loader.archives]]`) in order and
+writes to the `postgres` service. It remembers per archive how far it got (file and record) in
+the same transaction as the rows, so a restart never loads a message twice or skips one. On its
+first start it begins with the oldest file in each archive.
 
 What it stores, for the data owners in `[loader] data_owners`:
 
 - `stop_events`: KV6 `ARRIVAL` and `DEPARTURE`, with the delay exactly as the operator reported
-  it. These are what a departure's delay is read from.
+  it. These are what a departure's delay is read from. For the metro, each SIRI `RecordedCall`
+  gives an `ARRIVAL` and a `DEPARTURE`, with the actual minus the aimed time as the delay.
 - `trips_seen`: one row per trip that sent an `ARRIVAL`, `ONSTOP` or `DEPARTURE`. `ONSTOP` repeats
   every minute while a vehicle stands still, so it only counts here, not as rows of its own.
 - `journey_mutations`: KV17 `CANCEL`, `RECOVER`, `NOTMONITORED` and `SHORTEN` (a skipped stop).
+  A SIRI journey or call with `Cancellation=true` is stored as `CANCEL` or `SHORTEN`, but only
+  when it arrived before the trip's last planned stop: GVB marks every journey cancelled again
+  at 03:00, after the day has run.
 - `recorder_markers`, `load_progress` and `bad_messages`.
 
-Position updates between stops (`ONROUTE`) and KV15 messages stay in the raw archive only.
+Position updates between stops (`ONROUTE`), KV15 messages and SIRI `VehicleMonitoringDelivery`
+stay in the raw archive only.
 
 The day tables have one partition per operating day. Days older than `window_days` (90) are
 dropped once an hour.
@@ -139,4 +144,6 @@ When the parser changes, the database is rebuilt from the raw archive:
     docker compose start loader
 
 Replay empties the days from the day after the oldest archive file on, and the loader then
-reads every file again. Older days stay as they are, because their raw files are gone.
+reads every file again. Older days stay as they are, because their raw files are gone. With two
+archives the later of their oldest files counts; the SIRI archive keeps 30 days, so a replay
+rebuilds the last 30 days.

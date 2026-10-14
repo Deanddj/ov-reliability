@@ -80,6 +80,7 @@ services:
       OV_DATABASE_URL: postgresql://ov:${POSTGRES_PASSWORD}@postgres/ov
     volumes:
       - archive:/data/archive:ro
+      - archive-siri:/data/archive-siri:ro
       - ./config.toml:/app/config.toml:ro
     depends_on:
       postgres:

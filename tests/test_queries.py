@@ -31,7 +31,13 @@ def store(
     until: datetime | None = None,
     recorder: str = "collector",
 ) -> None:
-    batch = Batch(events, seen, mutations, marker_rows, ())
+    batch = Batch(
+        tuple((e, "KV6") for e in events),
+        seen,
+        tuple((m, "KV17") for m in mutations),
+        marker_rows,
+        (),
+    )
     write_batch(conn, recorder, batch, Position("f", 1), until)
 
 
