@@ -207,6 +207,7 @@ def create_app(
                 mode=mode,
                 code=code,
                 planning_numbers=sorted(numbers - ignored),
+                realtime=source is not None,
             ),
             from_=render.local(since),
             to=render.local(until),

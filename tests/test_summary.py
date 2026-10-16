@@ -123,12 +123,12 @@ def test_summary_properties(trips: list[Trip]) -> None:
             + counts.unplanned
         )
         d = block.departures
-        assert d.with_delay + d.without_delay == d.total
-        assert d.cancelled <= d.without_delay
+        assert d.known_delay + d.unknown_delay == d.total
+        assert d.cancelled <= d.unknown_delay
         known = [x.delay_seconds for t in members for x in t.departures]
         values = [x for x in known if x is not None]
         p = block.delay_seconds
-        if d.with_delay == 0:
+        if d.known_delay == 0:
             assert p == Percentiles(None, None, None)
         else:
             assert p.p10 is not None and p.p50 is not None and p.p90 is not None

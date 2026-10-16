@@ -7,23 +7,23 @@
             "title": "Cancelled",
             "type": "integer"
           },
+          "known_delay": {
+            "title": "Known Delay",
+            "type": "integer"
+          },
           "total": {
             "title": "Total",
             "type": "integer"
           },
-          "with_delay": {
-            "title": "With Delay",
-            "type": "integer"
-          },
-          "without_delay": {
-            "title": "Without Delay",
+          "unknown_delay": {
+            "title": "Unknown Delay",
             "type": "integer"
           }
         },
         "required": [
           "total",
-          "with_delay",
-          "without_delay",
+          "known_delay",
+          "unknown_delay",
           "cancelled"
         ],
         "title": "DepartureCountsOut",
@@ -346,13 +346,18 @@
             },
             "title": "Planning Numbers",
             "type": "array"
+          },
+          "realtime": {
+            "title": "Realtime",
+            "type": "boolean"
           }
         },
         "required": [
           "operator",
           "mode",
           "code",
-          "planning_numbers"
+          "planning_numbers",
+          "realtime"
         ],
         "title": "MetaLine",
         "type": "object"
