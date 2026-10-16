@@ -2,7 +2,7 @@
 
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta
 from typing import Literal
 
@@ -87,6 +87,9 @@ def build_trips(
         if not any(departure.sequence is not None for departure in departures):
             continue
         status = _status(plan, seen, gaps, data_until, now, missing_after, realtime)
+        if status == "cancelled":
+            # Every stop of a cancelled trip was called off, as seen from the platform.
+            departures = tuple(replace(departure, cancelled=True) for departure in departures)
         trips.append(
             (
                 plan.start,

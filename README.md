@@ -15,7 +15,7 @@ U-OV in Utrecht. More operators follow.
 {
   "direction": "outbound",
   "trips": {"total": 8, "ran": 8, "cancelled": 0, "missing": 0, "unknown": 0, "not_yet_due": 0, "unplanned": 0},
-  "departures": {"total": 164, "with_delay": 76, "without_delay": 88, "cancelled": 45},
+  "departures": {"total": 164, "known_delay": 76, "unknown_delay": 88, "cancelled": 45},
   "delay_seconds": {"p10": 130, "p50": 882, "p90": 4481}
 }
 ```
@@ -55,11 +55,13 @@ The full schema is at [/docs](https://ov.deanj.dev/docs).
 | `ran` | The tram reported at a stop |
 | `cancelled` | The operator cancelled it and it never showed up |
 | `missing` | It should have started 15 minutes ago and nothing was heard |
-| `unknown` | As missing, but the recording had a gap, so it can't be told |
+| `unknown` | As missing, but the recording had a gap or the line has no real-time data (`meta.line.realtime`), so it can't be told |
 | `not_yet_due` | Not 15 minutes past its planned start yet |
 
 Delays are the ones the operator reported, in seconds. Percentiles use the nearest rank, so each
-one is a delay that actually happened.
+one is a delay that actually happened. A departure without a reported delay counts under
+`unknown_delay`; HTM rarely reports the arrival at a trip's last stop, so that stop usually has
+none. A departure is `cancelled` when its stop was skipped or its whole trip was cancelled.
 
 ## How it works
 

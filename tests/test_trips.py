@@ -197,6 +197,12 @@ def test_a_stop_event_wins_over_a_cancellation() -> None:
     assert only(build({key(): found})).status == "ran"
 
 
+def test_every_departure_of_a_cancelled_trip_is_cancelled() -> None:
+    trip = only(build({key(): observed(mutations=[mutation("CANCEL", -10)])}))
+    assert trip.departures
+    assert all(d.cancelled and d.delay_seconds is None for d in trip.departures)
+
+
 def test_a_cancelled_trip_in_the_future_is_cancelled() -> None:
     found = observed(mutations=[mutation("CANCEL", -10)])
     assert only(build({key(): found}, now=at(-30), end=at(60))).status == "cancelled"
@@ -430,6 +436,8 @@ def test_statuses_follow_the_contract(
             assert not any(g.start < window_end and g.end > plan.start for g in gaps)
         if trip.status == "not_yet_due":
             assert now < due
+        if trip.status == "cancelled":
+            assert all(d.cancelled for d in trip.departures)
         assert any(d.planned is not None for d in trip.departures)
         for departure in trip.departures:
             if departure.planned is not None:

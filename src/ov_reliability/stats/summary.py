@@ -20,8 +20,8 @@ class TripCounts:
 @dataclass(frozen=True)
 class DepartureCounts:
     total: int
-    with_delay: int
-    without_delay: int
+    known_delay: int
+    unknown_delay: int
     cancelled: int
 
 
@@ -76,8 +76,8 @@ def _summarise(direction: str | None, trips: list[Trip]) -> DirectionSummary:
         ),
         departures=DepartureCounts(
             total=len(departures),
-            with_delay=len(delays),
-            without_delay=len(departures) - len(delays),
+            known_delay=len(delays),
+            unknown_delay=len(departures) - len(delays),
             cancelled=sum(departure.cancelled for departure in departures),
         ),
         delay_seconds=Percentiles(

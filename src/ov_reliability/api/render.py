@@ -90,6 +90,7 @@ class MetaLine(_Model):
     mode: str
     code: str
     planning_numbers: list[str]
+    realtime: bool
 
 
 class GapOut(_Model):
@@ -150,8 +151,8 @@ class TripCountsOut(_Model):
 
 class DepartureCountsOut(_Model):
     total: int
-    with_delay: int
-    without_delay: int
+    known_delay: int
+    unknown_delay: int
     cancelled: int
 
 

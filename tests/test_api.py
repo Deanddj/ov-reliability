@@ -189,6 +189,7 @@ def test_trips_in_the_default_range(timetables: Path) -> None:
         "mode": "tram",
         "code": "3",
         "planning_numbers": ["3", "53"],
+        "realtime": True,
     }
     assert (meta["from"], meta["to"], meta["generated_at"]) == (
         "2026-10-07T06:00:00+02:00",
@@ -328,6 +329,7 @@ def test_line_without_realtime_data(timetables: Path) -> None:
         **{"from": "2026-10-07T07:00:00+02:00", "to": "2026-10-07T09:00:00+02:00"},
     )
     assert store.calls == []
+    assert body["meta"]["line"]["realtime"] is False
     assert body["meta"]["data_until"] == {}
     assert [(t["journey_number"], t["status"]) for t in body["trips"]] == [(4001, "not_yet_due")]
     lines = get(client(timetables, **changes), "/v1/lines")["lines"]
