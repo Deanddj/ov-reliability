@@ -68,6 +68,9 @@ every published NeTEx timetable, a loader puts stop events and cancellations int
 the API joins them with the timetable on each request. The raw data is kept, so a better parser
 can always be run over the past. More in [docs/operations.md](docs/operations.md).
 
+Python 3.13, FastAPI, PostgreSQL and Docker Compose on a single VPS. Tested with pytest and
+Hypothesis, checked with Ruff and mypy `--strict` on every pull request.
+
 ## Running it
 
     echo "POSTGRES_PASSWORD=$(openssl rand -hex 24)" > .env
@@ -91,3 +94,16 @@ Database tests need PostgreSQL and are skipped without it:
 ## Data
 
 Real-time data and timetables from NDOV Loket, CC0. Code under the MIT license.
+
+## Design
+
+The design choices follow *The Pragmatic Programmer* (Hunt and Thomas). A few examples:
+
+- **Tracer bullets**: one line, HTM tram 3, went live end to end before anything was widened.
+  GVB trams and buses and all of RET were later added by editing the config alone.
+- **Crash early**: a message that makes no sense is rejected and logged, never filled in with
+  a default. A recording gap gives `unknown`, not `missing`, and a line without real-time data
+  is never reported as on time.
+- **Reversibility**: every raw message is kept, so a parser fix can be replayed over the past.
+- **Test what must always hold**: the statistics are checked with property-based tests, not
+  only with hand-picked examples.

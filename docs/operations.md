@@ -1,7 +1,6 @@
 # Operations
 
-How the services behave and how to check them on the server. On the VPS, prefix `docker`
-with `sudo`.
+How the services behave and how to check them on the server.
 
 ## Recorders
 
