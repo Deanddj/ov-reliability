@@ -70,10 +70,11 @@ no_realtime = [
   "ret/bus/701",
 ]
 # Planning numbers in the timetable that are not a service riders see. HTM plans these every
-# day but never runs them; 98 and 99 are test lines. U-flex is on demand: its journeys in the
-# timetable are bookable time slots, not trips.
+# day but never runs them; 98 and 99 are test lines. HTM 53 (tram 3, Arnold Spoelplein - Laan
+# van NOI) ran on 19-23 October only and has been planned daily without running since 9 November.
+# U-flex is on demand: its journeys in the timetable are bookable time slots, not trips.
 ignore_planning_numbers = [
-  "htm/54", "htm/67", "htm/68", "htm/75", "htm/89", "htm/90", "htm/97", "htm/98", "htm/99",
+  "htm/53", "htm/54", "htm/67", "htm/68", "htm/75", "htm/89", "htm/90", "htm/97", "htm/98", "htm/99",
   "uov/U903", "uov/U913", "uov/U922", "uov/U927", "uov/U944", "uov/U945", "uov/U957",
   "uov/U958", "uov/U959", "uov/U978",
 ]
