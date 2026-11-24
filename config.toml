@@ -106,8 +106,10 @@ lines = ["uov/tram/*"]
 recorder = "collector"
 topics = ["/IVU/KV6posinfo", "/IVU/KV17cvlinfo"]
 
-# The GVB metro is only published in SIRI.
+# The GVB metro is only published in SIRI. On days with a changed service (works) SIRI
+# numbers the journeys differently from the weekly timetable, so they are matched by time.
 [[api.realtime]]
 lines = ["gvb/metro/*"]
 recorder = "collector-siri"
 topics = ["/GVB/EstimatedTimetableDelivery"]
+match_by_time = true

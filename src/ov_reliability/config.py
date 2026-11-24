@@ -185,6 +185,9 @@ class RealtimeSource(_Section):
     lines: LinePatterns = Field(min_length=1)
     recorder: str
     topics: tuple[str, ...] = Field(min_length=1)
+    # The journey numbers of this source can't be trusted to name the planned trip, so trips
+    # are matched by their times as well (decision 096).
+    match_by_time: bool = False
 
     @field_validator("recorder")
     @classmethod

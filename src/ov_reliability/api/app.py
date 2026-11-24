@@ -22,6 +22,7 @@ from ov_reliability.api.timetables import PlanCache
 from ov_reliability.collector.records import Marker
 from ov_reliability.config import ApiConfig
 from ov_reliability.kv6.parse import TripKey
+from ov_reliability.stats.align import align_observations
 from ov_reliability.stats.gaps import Gap, gaps
 from ov_reliability.stats.summary import summarise
 from ov_reliability.stats.trips import Observations, Trip, build_trips
@@ -183,9 +184,14 @@ def create_app(
                     if recorder == source.recorder
                 }
             found_gaps = gaps(source.recorder, markers, source.topics, gaps_from, now)
+        matched, unplaced = (
+            align_observations(planned, observations)
+            if source is not None and source.match_by_time
+            else (observations, {})
+        )
         found = build_trips(
             planned,
-            observations,
+            matched,
             found_gaps,
             until_by_recorder.get(source.recorder) if source else None,
             now,
@@ -193,6 +199,7 @@ def create_app(
             until,
             timedelta(minutes=settings.missing_after_minutes),
             source is not None,
+            unplaced,
         )
         if direction is not None:
             found = [trip for trip in found if trip.direction == direction]

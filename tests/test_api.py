@@ -318,6 +318,25 @@ def test_ignored_planning_number_runs_as_unplanned(timetables: Path) -> None:
     assert "['3', '53']" in store.calls[0]
 
 
+def test_a_source_that_matches_by_time_pairs_a_trip_with_another_number(timetables: Path) -> None:
+    # Journey 99999 is aimed at the time of planned journey 53001 (07:00 at stop 1001).
+    other = StopEvent(
+        key(99999, "53"), "1001", 0, "DEPARTURE", local(7, 7, 0, 40), 40, local(7, 7, 0, 41)
+    )
+    store = FakeStore(
+        observed={key(99999, "53"): Observations((other,), (), (local(7, 7, 0, 40),) * 2)}
+    )
+
+    def trips(by_time: bool) -> list[tuple[int, bool, str]]:
+        entries = config_data(Path("/tmp/archive"))["api"]["realtime"]
+        realtime = [{**entry, "match_by_time": by_time} for entry in entries]
+        body = get(client(timetables, store, realtime=realtime), "/v1/lines/htm/tram/3/trips")
+        return [(t["journey_number"], t["planned"], t["status"]) for t in body["trips"]]
+
+    assert trips(False) == [(53001, True, "missing"), (99999, False, "ran")]
+    assert trips(True) == [(53001, True, "ran")]
+
+
 def test_line_without_realtime_data(timetables: Path) -> None:
     store = FakeStore()
     realtime = copy.deepcopy(api_settings().model_dump()["realtime"])

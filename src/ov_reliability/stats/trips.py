@@ -68,11 +68,14 @@ def build_trips(
     end: datetime,
     missing_after: timedelta,
     realtime: bool,
+    unplaced: Mapping[TripKey, Observations] | None = None,
 ) -> list[Trip]:
     """The trips with a departure in [start, end), with statuses decided on the whole trip.
 
     `gaps` are the gaps of the line's recorder and topics; `data_until` is how far that
-    recorder's data is loaded. Without `realtime` no trip can be `missing`.
+    recorder's data is loaded. Without `realtime` no trip can be `missing`. `unplaced` are
+    observations that are known not to belong to the planned trip with the same key (see
+    `stats.align`); they show as unplanned trips.
     """
     names = {stop.stop_code: stop.stop_name for trip in planned for stop in trip.stops}
     trips: list[tuple[datetime, Trip]] = []
@@ -106,14 +109,15 @@ def build_trips(
                 ),
             )
         )
-    for key, seen in observations.items():
-        if key in planned_keys or (seen.seen is None and not seen.events):
+    extra = [(key, seen) for key, seen in observations.items() if key not in planned_keys]
+    extra += list((unplaced or {}).items())
+    for key, seen in extra:
+        if seen.seen is None and not seen.events:
             continue
         if key.reinforcement != 0:
             # How reinforcement trips appear is decided when a line that has them is served.
             raise ValueError(f"reinforcement trip {key} can't be shown yet")
-        extra = _extra_departures(seen, set(), names)
-        departures = _in_range(extra, start, end)
+        departures = _in_range(_extra_departures(seen, set(), names), start, end)
         overlaps = seen.seen is not None and seen.seen[0] < end and seen.seen[1] >= start
         if not departures and not overlaps:
             continue
