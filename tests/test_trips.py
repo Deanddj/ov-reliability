@@ -87,6 +87,7 @@ def build(
     start: datetime = EARLY,
     end: datetime = NOW,
     realtime: bool = True,
+    unplaced: dict[TripKey, Observations] | None = None,
 ) -> list[Trip]:
     return build_trips(
         [planned_trip()] if planned is None else planned,
@@ -98,6 +99,7 @@ def build(
         end,
         MISSING_AFTER,
         realtime,
+        unplaced,
     )
 
 
@@ -344,6 +346,16 @@ def test_unplanned_trip_seen_in_the_range_without_departures() -> None:
 def test_mutations_alone_are_no_unplanned_trip() -> None:
     found = observed(mutations=[mutation("CANCEL", 0, journey=9)])
     assert build({key(9): found}, planned=[]) == []
+
+
+def test_an_unplaced_trip_shows_as_unplanned_even_when_a_planned_trip_has_its_key() -> None:
+    # Real journey 1 is another trip than the planned journey 1, which was not seen.
+    found = observed(event("A", "DEPARTURE", 30, 10, journey=1))
+    trips = build(unplaced={key(1): found})
+    assert [(trip.journey_number, trip.planned, trip.status) for trip in trips] == [
+        (1, True, "missing"),
+        (1, False, "ran"),
+    ]
 
 
 def test_reinforcement_trips_are_refused() -> None:

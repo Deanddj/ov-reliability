@@ -56,6 +56,9 @@ def test_repository_config_is_valid() -> None:
     metro = api.realtime_for("gvb", "metro", "52")
     assert metro is not None
     assert metro.recorder == "collector-siri"
+    # Only the SIRI metro has journey numbers that can't identify a planned trip (decision 096).
+    assert metro.match_by_time
+    assert not sneltram.match_by_time
     assert ("htm", "54") in api.ignore_planning_numbers
 
 
